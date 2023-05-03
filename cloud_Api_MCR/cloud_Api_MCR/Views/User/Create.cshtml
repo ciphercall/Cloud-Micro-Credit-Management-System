@@ -1,0 +1,467 @@
+﻿@using cloud_Api_MCR.DataAccess.OTHERS
+@using cloud_Api_MCR.Models.ASL_DTO
+@using Newtonsoft.Json.Linq
+@model cloud_Api_MCR.Models.ASL_DTO.ViewAslUserco
+
+@{
+
+    ViewBag.Title = "Create";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompanyName = HttpContext.Current.Session["loggedCompanyName"].ToString();
+    var loggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    if ((loggedUserTp == "SADMIN" || loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    List<SelectListItem> listStatus = new List<SelectListItem>();
+    listStatus.Add(new SelectListItem { Text = "Active", Value = "A" });
+    listStatus.Add(new SelectListItem { Text = "Inactive", Value = "I" });
+
+    List<SelectListItem> listLogInBy = new List<SelectListItem>();
+    listLogInBy.Add(new SelectListItem { Text = "Mobile Number", Value = "MOBNO" });
+    listLogInBy.Add(new SelectListItem { Text = "Email Address", Value = "EMAIL" });
+
+    List<SelectListItem> listOpTp = new List<SelectListItem>();
+    if (loggedUserTp == "SADMIN")
+    {
+        listOpTp.Add(new SelectListItem { Text = "Company Admin", Value = "CADMIN" });
+    }
+    else
+    {
+        listOpTp.Add(new SelectListItem { Text = "User Admin", Value = "UADMIN" });
+        listOpTp.Add(new SelectListItem { Text = "User", Value = "USER" });
+    }
+
+    var comid = "";
+    var comnm = HttpContext.Current.Session["loggedCompanyName"].ToString();
+    var comad = "";
+    var comco = "";
+    var comemail = "";
+    var compassword = "";
+
+
+    var createStatus = "";
+    var updateStatus = "";
+    var deleteStatus = "";
+    var viewStatus = "";
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+        ViewAslRole roleInfo = new ViewAslRole();
+        roleInfo = (ViewAslRole)TempData["UserRoleInfo"];
+        viewStatus = roleInfo.Status;
+        createStatus = roleInfo.Insertr;
+        updateStatus = roleInfo.Updater;
+        deleteStatus = roleInfo.Deleter;
+
+        comid = loggedCompId.ToString();
+        comnm = loggedCompanyName.ToString();
+        comco = "880";
+    }
+    else if (loggedUserTp == "SADMIN" && loggedUserStatus == "A")
+    {
+        ViewAslUserco aslUserco = new ViewAslUserco();
+        aslUserco = (ViewAslUserco)TempData["UserInfo"];
+        comid = aslUserco.Compid.ToString();
+        comnm = aslUserco.Compnm;
+        comad = aslUserco.Address;
+        comco = aslUserco.Mobno;
+        comemail = aslUserco.Emailid;
+        compassword = aslUserco.Loginpw;
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+}
+
+
+<link href="~/Content/bootstrap-3.3.7-dist/css/bootstrap-theme.css" rel="stylesheet" />
+@*bootstrap -Clock Picker*@
+<link href="~/Content/bootstrap-ClockPicker/src/clockpicker.css" rel="stylesheet" />
+<script src="~/Content/bootstrap-ClockPicker/src/clockpicker.js"></script>
+<link href="~/Content/bootstrap-ClockPicker/src/standalone.css" rel="stylesheet" />
+
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    @Html.HiddenFor(model => model.Compid, new { @Value = comid })
+
+    <div id="contentHeaderBox">
+        <h1 style="padding-left:16px">Create User Information</h1>
+        @if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+        {
+            if (createStatus == "A")
+            {
+
+            }
+            else if (updateStatus == "A")
+            {
+                Response.Redirect("~/User/Update");
+            }
+            else if (deleteStatus == "A")
+            {
+                Response.Redirect("~/User/Delete");
+            }
+
+            if (viewStatus == "I")
+            {
+                Response.Redirect("~/Logout/Index");
+            }
+
+            if (createStatus == "I")
+            {
+                Response.Redirect("~/Password/PasswordChangedForm");
+            }
+
+
+
+            <div class="btn-group pull-right" id="editOption">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" aria-expanded="false">
+                    <i class="fa fa-cog"></i>
+                </button>
+                <ul class="dropdown-menu pull-right" style="" role="menu">
+                    @if (createStatus == 'A'.ToString() && updateStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                    {
+                        <li>
+                            <a href="@Url.Action("Create", "User")"><i class="fa fa-plus"></i> Create</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Update", "User")"><i class="fa fa-edit"></i> Update</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("DeleteForm", "User")"><i class="fa fa-times"></i> Delete</a>
+                        </li>
+                    }
+                    else if (updateStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                    {
+                        <li>
+                            <a href="@Url.Action("Update", "User")"><i class="fa fa-edit"></i> Update</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("DeleteForm", "User")"><i class="fa fa-times"></i> Delete</a>
+                        </li>
+                    }
+                    else if (createStatus == 'A'.ToString() && updateStatus == 'A'.ToString())
+                    {
+                        <li>
+                            <a href="@Url.Action("Create", "User")"><i class="fa fa-plus"></i> Create</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("Update", "User")"><i class="fa fa-edit"></i> Update</a>
+                        </li>
+                    }
+                    else if (createStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                    {
+                        <li>
+                            <a href="@Url.Action("Create", "User")"><i class="fa fa-plus"></i> Create</a>
+                        </li>
+                        <li>
+                            <a href="@Url.Action("DeleteForm", "User")"><i class="fa fa-times"></i> Delete</a>
+                        </li>
+                    }
+                    else if (createStatus == 'A'.ToString())
+                    {
+                        <li>
+                            <a href="@Url.Action("Create", "User")"><i class="fa fa-plus"></i> Create</a>
+                        </li>
+                    }
+                    else if (updateStatus == 'A'.ToString())
+                    {
+                        <li>
+                            <a href="@Url.Action("Update", "User")"><i class="fa fa-edit"></i> Update</a>
+                        </li>
+                    }
+                    else if (deleteStatus == 'A'.ToString())
+                    {
+                        <li>
+                            <a href="@Url.Action("DeleteForm", "User")"><i class="fa fa-times"></i> Delete</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+
+        }
+
+    </div>
+    <br />
+    <div class="col-md-12">
+        @if (TempData["UserCreationMessage"] != null)
+        {
+            <div class="panel-heading text-center">
+                <h4 style="color: #226699">@TempData["UserCreationMessage"]</h4>
+            </div>
+        }
+
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Company Name")
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBox("name", comnm, new { @class = "form-control", @readonly = "readonly" })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "User Name")
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Usernm, htmlAttributes: new { @class = "form-control", autofocus = true })
+                    @Html.ValidationMessageFor(model => model.Usernm, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Department Name")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Deptnm, htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Deptnm, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Operation Type")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Optp, listOpTp, "--Select Operation Type--", htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Optp, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Address")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Address, htmlAttributes: new { @class = "form-control", @Value = comad })
+                    @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "MobileNo")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Mobno, htmlAttributes: new { id = "txtMobileID", @class = "form-control", @Value = comco })
+                    @Html.ValidationMessageFor(model => model.Mobno, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("Email ID")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Emailid, htmlAttributes: new { id = "txtEmailID", @class = "form-control", @Value = comemail })
+                    @Html.ValidationMessageFor(model => model.Emailid, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Login BY")
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Loginby, listLogInBy, "--Select Login By--", htmlAttributes: new { id = "dropdownBoxId", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Loginby, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Login ID")
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Loginid, htmlAttributes: new { id = "loginTextID", @class = "form-control", @readonly = "readonly" })
+                    @Html.ValidationMessageFor(model => model.Loginid, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Login Password")
+                </div>
+                <div class="col-md-8">
+                    @Html.PasswordFor(model => model.Loginpw, htmlAttributes: new { @class = "form-control", @Value = compassword })
+                    @Html.ValidationMessageFor(model => model.Loginpw, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Time For")
+                </div>
+                <div class="col-md-8">
+                    <div class="input-group clockpicker" data-align="top" data-autoclose="true">
+                        @Html.TextBoxFor(model => model.Timefr, htmlAttributes: new { @class = "form-control", @Value = "00:01" })
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-time"></span>
+                        </span>
+                    </div>
+                    @Html.ValidationMessageFor(model => model.Timefr, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Time To")
+                </div>
+                <div class="col-md-8">
+                    <div class="input-group clockpicker" data-align="top" data-autoclose="true">
+                        @Html.TextBoxFor(model => model.Timeto, htmlAttributes: new { @class = "form-control", @Value = "23:59" })
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-time"></span>
+                        </span>
+                    </div>
+                    @Html.ValidationMessageFor(model => model.Timeto, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Status")
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Status, listStatus, "--Select Status--", htmlAttributes: new { @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Status, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+
+            @Html.TextBoxFor(model => model.Insltude, new { id = "latlon", style = "display: none;" })
+            <input id="lat" type="hidden" />
+            <input id="lon" type="hidden" />
+
+
+            <br />
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-6">
+                    <input type="submit" class="btn btn-primary btn-block" value="Save" />
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
+
+    //datatime picker script
+    <script type="text/javascript">
+        $('.clockpicker').clockpicker();
+    </script>
+
+
+    //Latitute & longitude
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <script language="javascript" type="text/javascript">
+        $(function () {
+            navigator.geolocation.getCurrentPosition(showPosition);
+            //navigator.geolocation.getCurrentPosition(showPosition, positionError);
+
+            function showPosition(position) {
+                var coordinates = position.coords;
+                $("#lat").val(coordinates.latitude);
+                $("#lon").val(coordinates.longitude);
+
+                $("#latlon").val(
+                    $("#lat").val() + "," + $("#lon").val()
+                );
+            }
+        });
+
+        //passing value from textBox(Mobile Number,Email ID) to another textBox(Login By phoneNo/EmailId?) by selected dropdownList
+        $(function () {
+            $('#dropdownBoxId').change(function () {
+                // gets the value from the drop down box
+                var selected = $("#dropdownBoxId option:selected").text();
+
+                var txtMobile = $("#txtMobileID").val();
+                var txtEmail = $("#txtEmailID").val();
+                // puts the value into the textbox
+                var txtBox = document.getElementById('loginTextID');
+
+                if (selected == "Mobile Number") {
+                    txtBox.value = txtMobile;
+                    document.getElementById("loginTextID").focus();
+                }
+                else if (selected == "Email Address") {
+                    txtBox.value = txtEmail;
+                    document.getElementById("loginTextID").focus();
+                }
+                else {
+                    txtBox.value = "";
+                }
+
+            });
+        });
+    </script>
+}
+
+
+
+<style type="text/css">
+    .completionList {
+        border: solid 1px Gray;
+        margin: 0px;
+        padding: 3px;
+        height: 120px;
+        overflow: auto;
+        background-color: #FFFFFF;
+    }
+
+    .listItem {
+        color: #191919;
+    }
+
+    .itemHighlighted {
+        background-color: #ADD6FF;
+    }
+</style>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryui")
+    @Scripts.Render("~/bundles/jqueryval")
+}
+
+
+
+

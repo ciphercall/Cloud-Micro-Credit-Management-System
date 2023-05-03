@@ -1,0 +1,221 @@
+﻿@using cloud_Api_MCR.Models.Account_DTO
+@using cloud_Api_MCR.Models.ASL_DTO
+@using cloud_Api_MCR.Models.MCR_DTO
+@model cloud_Api_MCR.Models.MCR_DTO.ViewMcrScheme
+@{
+    ViewBag.Title = "Index";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedToken = HttpContext.Current.Session["loggedToken"]?.ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserId = HttpContext.Current.Session["loggedUserID"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+    var createStatus = "";
+    var updateStatus = "";
+    var deleteStatus = "";
+    var viewStatus = "";
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+        ViewAslRole roleInfo = new ViewAslRole();
+        roleInfo = (ViewAslRole)TempData["UserRoleInfo"];
+        viewStatus = roleInfo.Status;
+        createStatus = roleInfo.Insertr;
+        updateStatus = roleInfo.Updater;
+        deleteStatus = roleInfo.Deleter;
+    }
+
+    if (viewStatus == "I")
+    {
+        Response.Redirect("~/GraphView/Index");
+    }
+
+
+    // Scheme Type loaded in DropdownList
+    List<SelectListItem> listOfType = new List<SelectListItem>();
+    listOfType.Add(new SelectListItem { Text = "DEPOSIT", Value = "DEPOSIT" });
+    listOfType.Add(new SelectListItem { Text = "LOAN", Value = "LOAN" });
+
+    List<SelectListItem> gridlistOfType = new List<SelectListItem>();
+    gridlistOfType.Add(new SelectListItem { Text = "DEPOSIT", Value = "DEPOSIT" });
+    gridlistOfType.Add(new SelectListItem { Text = "LOAN", Value = "LOAN" });
+
+
+    // Account Name loaded in DropdownList
+    List<SelectListItem> listOfGlHead = new List<SelectListItem>();
+    List<ViewGlAcchart> passData2 = (List<ViewGlAcchart>)TempData["passData_SelectAccountList"];
+    foreach (var n in passData2)
+    {
+        listOfGlHead.Add(new SelectListItem { Text = n.Accountnm, Value = n.Accountcd.ToString() });
+    }
+
+
+    // Account Name loaded in DropdownList
+    List<SelectListItem> listOfGlIncome = new List<SelectListItem>();
+    List<ViewGlAcchart> passData3 = (List<ViewGlAcchart>)TempData["passData_SelectAccountList"];
+    foreach (var n in passData3)
+    {
+        listOfGlIncome.Add(new SelectListItem { Text = n.Accountnm, Value = n.Accountcd.ToString() });
+    }
+}
+
+<link href="~/Content/Angular-File/ng-grid.css" rel="stylesheet" />
+<link href="~/Content/select2-4.0.3/css/select2.css" rel="stylesheet" /> <!--Select2 DropDown with Box -->
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <div id="contentHeaderBox">
+        <h1 style="padding-left: 16px">Scheme List</h1>
+    </div>
+    <br />
+
+
+    <div class="col-md-12">
+        <div class="form-group">
+            <div ng-app="SchemeApp" data-ng-controller="ApiSchemeController">
+                @Html.HiddenFor(model => model.Compid, new { id = "txtCid", @Value = loggedCompId })
+                @Html.HiddenFor(model => model.Insuserid, new { id = "txtUid", @Value = loggedUserId })
+                @Html.HiddenFor(model => model.Token, new { id = "txtTid", @Value = loggedToken })
+                @Html.HiddenFor(model => model.Insert, new { id = "txt_Insertid", @Value = createStatus })
+                @Html.HiddenFor(model => model.Update, new { id = "txt_Updateid", @Value = updateStatus })
+                @Html.HiddenFor(model => model.Delete, new { id = "txt_Deleteid", @Value = deleteStatus })
+                @Html.HiddenFor(model => model.Insltude, new { id = "latlon" })
+                <input id="lat" type="hidden" />
+                <input id="lon" type="hidden" />
+
+                <div class="row">
+                    @*<div class="col-md-1">
+                        </div>*@
+                    <div class="col-md-12">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">Information</div>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tr>
+                                        <th @*style="width: 30%"*@>Type</th>
+                                        <th @*style="width: 30%"*@>Scheme ID</th>
+                                        <th @*style="width: 20%"*@>Accounts Head Link</th>
+                                        <th @*style="width: 20%"*@>Income</th>
+                                        <th @*style="width: 10%"*@>Remarks</th>
+                                        <th @*style="width: 10%"*@></th>
+                                    </tr>
+                                    <tr>
+                                        <td>@Html.DropDownListFor(model => model.Schemetp, listOfType, new { id = "ddlSchemeTypeId", @class = "form-control input-sm" })</td>
+                                        <td><input type="text" class="form-control input-sm" data-ng-model="newChild.Schemeid" id="txtSchemeId" required /></td>
+                                        <td>@Html.DropDownListFor(model => model.Glheadid, listOfGlHead, "-Select-", new {id = "ddlGlHeadId", @class = "form-control input-sm"})</td>
+                                        <td>@Html.DropDownListFor(model => model.GlIncomehid, listOfGlIncome, "-Select-", new { id = "ddlGlIncomeId", @class = "form-control input-sm" })</td>
+                                        <td><input type="text" class="form-control input-sm" data-ng-model="newChild.Remarks" id="txtRemarksId" required /></td>
+                                        <td><input type="submit" value="Insert" data-ng-click="addrow($event)" class="btn btn-primary" /></td>
+                                    </tr>
+
+                                    <tr data-ng-repeat="testitem in schemeListData">
+                                        <td hidden><strong data-ng-hide="testitem.editMode">{{testitem.Compid}}</strong></td>
+                                        <td hidden><p data-ng-hide="testitem.editMode">{{ testitem.Schemecd }}</p></td>
+                                        <td hidden><p data-ng-hide="testitem.editMode">{{ testitem.GlIncomehid }}</p></td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Schemetp }}</p>
+                                            @Html.DropDownListFor(model => model.Schemetp, gridlistOfType, new { id = "gridSchemeTypeId", data_ng_show = "testitem.editMode", data_ng_model = "testitem.Schemetp", @class = "form-control" })
+                                        </td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Schemeid }}</p>
+                                            <input class="form-control input-sm" data-ng-show="testitem.editMode" type="text" data-ng-model="testitem.Schemeid" id="gridAuthorizedPersonId" />
+                                        </td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.GlHeadName }}</p>
+                                            @Html.DropDownListFor(model => model.Glheadid, listOfGlHead, "- Select -", new { id = "gridAccountsHeadLinkId", @class = "form-control input-sm gridAccountsHeadLinkId", data_ng_show = "testitem.editMode", data_ng_model = "testitem.Glheadid" })
+                                            @*<input class="form-control input-sm" data-ng-show="testitem.editMode" type="text" data-ng-model="testitem.GlHeadName" id="gridAccountsHeadLinkId" readonly="readonly"/>*@
+                                        </td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.GlIncomeName }}</p>
+                                            @Html.DropDownListFor(model => model.GlIncomehid, listOfGlIncome, "- Select -", new { id = "gridIncomeNameId", @class = "form-control input-sm gridIncomeNameId", data_ng_show = "testitem.editMode", data_ng_model = "testitem.GlIncomehid" })
+                                            @*<input class="form-control input-sm" data-ng-show="testitem.editMode" type="text" data-ng-model="testitem.GlIncomeName" id="gridIncomeNameId" readonly="readonly" />*@
+                                        </td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Remarks }}</p>
+                                            <input class="form-control input-sm" data-ng-show="testitem.editMode" type="text" data-ng-model="testitem.Remarks" id="gridRemarksId"  />
+                                        </td>
+                                        <td>
+                                            <p data-ng-hide="testitem.editMode"><a data-ng-click="toggleEdit(testitem)" href="javascript:;">Edit</a> | <a data-ng-click="deleteItem(testitem)" href="javascript:;">Delete</a></p>
+                                            <p data-ng-show="testitem.editMode"><a data-ng-click="update(testitem)" href="javascript:;">Save</a> | <a data-ng-click="toggleEdit_Cancel(testitem)" href="javascript:;">Cancel</a></p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    @*<div class="col-md-1">
+                        </div>*@
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    //Latitute & longitude
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <script language="javascript" type="text/javascript">
+        $(function () {
+            navigator.geolocation.getCurrentPosition(showPosition);
+            //navigator.geolocation.getCurrentPosition(showPosition, positionError);
+
+            function showPosition(position) {
+                var coordinates = position.coords;
+                $("#lat").val(coordinates.latitude);
+                $("#lon").val(coordinates.longitude);
+
+                $("#latlon").val(
+                    $("#lat").val() + "," + $("#lon").val()
+                );
+            }
+        });
+    </script>
+
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+            
+            $('#ddlGlHeadId').select2({
+                placeholder: 'Select an option'
+            });
+            $('#ddlGlIncomeId').select2({
+                placeholder: 'Select an option'
+            });
+        });
+    </script>
+}
+
+
+<link href="~/Content/themes/base/jquery-ui.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-ui-1.10.4.min.js"></script>
+
+<script src="~/Scripts/angularjs/1.0.5/angular.js"></script>
+<script src="~/Content/select2-4.0.3/js/select2.full.min.js"></script> <!--Select2 DropDown with Box -->
+<script src="~/Scripts/ViewScripts/Scheme/_Index.js"></script>
+<script src="~/Scripts/angularjs/ui-bootstrap-tpls-0.4.0.js"></script>
+
+
+
+
+

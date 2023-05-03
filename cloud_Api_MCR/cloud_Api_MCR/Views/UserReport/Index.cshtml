@@ -1,0 +1,197 @@
+﻿@using cloud_Api_MCR.Models.ASL_DTO
+@model cloud_Api_MCR.Models.ASL_DTO.ViewUserReport
+@{
+    ViewBag.Title = "Index";
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompanyStatus = HttpContext.Current.Session["loggedCompanyStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN") && loggedUserStatus == "A" && loggedCompanyStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    
+    // User Field loaded in DropdownList
+    List<SelectListItem> listOfUser = new List<SelectListItem>();
+    if (TempData["passData_SelectUserList"] != null)
+    {
+        List<ViewAslUserco> passDataComapnyList = (List<ViewAslUserco>)TempData["passData_SelectUserList"];
+        foreach (var n in passDataComapnyList)
+        {
+            listOfUser.Add(new SelectListItem { Text = n.Loginid, Value = n.Userid.ToString() });
+        }
+    }
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+}
+
+<link href="~/Content/bootstrap-Datepicker/datepicker.css" rel="stylesheet" />
+<link href="~/Content/bootstrap-Datepicker/datepicker3.css" rel="stylesheet" />
+
+<script src="~/Content/bootstrap-Datepicker/bootstrap-datepicker.js"></script>
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    
+
+
+    <div id="contentHeaderBox">
+        <h1 style="padding-left:16px">User Log Data Reports</h1>
+    </div>
+    <br />
+
+
+    <div class="col-md-12">
+        <div class="form-group">
+
+            <div class="row">
+                <div class="col-md-4">
+                    @Html.Label("name", "From Date: ")
+                </div>
+                <div class="col-md-6">
+                    @Html.TextBoxFor(model => model.FromDate, new { id = "fromDate", @class = "form-control", @Value = currentDateTime.ToString("dd-MMM-yyyy"), autofocus = true })
+                    @Html.ValidationMessageFor(model => model.FromDate, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-4">
+                    @Html.Label("name", "To Date: ")
+                </div>
+                <div class="col-md-6">
+                    @Html.TextBoxFor(model => model.ToDate, new { id = "toDate", @class = "form-control", @Value = currentDateTime.ToString("dd-MMM-yyyy") })
+                    @Html.ValidationMessageFor(model => model.ToDate, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-4">
+                    @Html.Label("name", "User ID: ")
+                </div>
+                <div class="col-md-6">
+                    @Html.DropDownListFor(model => model.UserId, listOfUser, "--Select User Name--", new { @class = "form-control", id = "ddlDropUsernameID" })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-4">
+                    @Html.Label("name", "User Name: ")
+                </div>
+                <div class="col-md-6">
+                    @Html.TextBoxFor(model => model.Usernm, new { @class = "form-control", id = "txtuserNameID", @readonly = "readonly" })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-4">
+                    @Html.Label("name", "Operation Type: ")
+                </div>
+                <div class="col-md-6">
+                    @Html.TextBoxFor(model => model.Optp, new { @class = "form-control", id = "operationTypeID", @readonly = "readonly" })
+
+                </div>
+
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-4"></div>
+                <div class="col-md-6">
+                    <input type="submit" class="btn btn-success" value="Print User Log Data" formtarget="_blank" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+
+        $('#fromDate').datepicker({
+            format: "dd-M-yyyy",
+            autoclose: true,
+            todayHighlight: true,
+            showOnFocus: true,
+        }).on('show', function (e) {
+            if (e.date) {
+                $(this).data('stickyDate', e.date);
+            }
+            else {
+                $(this).data('stickyDate', null);
+            }
+        }).on('hide', function (e) {
+            var stickyDate = $(this).data('stickyDate');
+
+            if (!e.date && stickyDate) {
+                $(this).datepicker('setDate', stickyDate);
+                $(this).data('stickyDate', null);
+            }
+            document.getElementById("toDate").focus();
+        });
+
+
+
+        $('#toDate').datepicker({
+            format: "dd-M-yyyy",
+            autoclose: true,
+            todayHighlight: true,
+            showOnFocus: true,
+        }).on('show', function (e) {
+            if (e.date) {
+                $(this).data('stickyDate', e.date);
+            }
+            else {
+                $(this).data('stickyDate', null);
+            }
+        }).on('hide', function (e) {
+            var stickyDate = $(this).data('stickyDate');
+
+            if (!e.date && stickyDate) {
+                $(this).datepicker('setDate', stickyDate);
+                $(this).data('stickyDate', null);
+            }
+            document.getElementById("ddlDropUsernameID").focus();
+        });
+
+
+        //1. User Name: [    ]
+        $('#ddlDropUsernameID').change(function () {
+            //When the UserName (Dropdown list) changed then get the "User ID" from "ASLUSERCO" table
+            var changedDropDown = $('#ddlDropUsernameID option:selected').val();
+
+            var txtUserName = document.getElementById('txtuserNameID');
+            var txtOperationType = document.getElementById('operationTypeID');
+
+            // when the value of the User Name field changes update the Select "UserName" field
+            $("#txtuserNameID").val("Null");
+            $("#operationTypeID").val("Null");
+
+            $.getJSON(
+                "/User/GetUserInformation", { "ChangedDropDown": changedDropDown },
+                function (myData) {
+                    txtUserName.value = myData.USERNAME;
+                    txtOperationType.value = myData.OPTP;
+                    document.getElementById("ddlDropUsernameID").focus();
+                });
+
+        });
+
+    </script>
+
+
+
+}
+
+
+
+

@@ -1,0 +1,232 @@
+﻿@model cloud_Api_MCR.Models.ASL_DTO.ViewAslCompany
+
+@{
+    ViewBag.Title = "Edit";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if (loggedUserTp == "SADMIN" && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    List<SelectListItem> listItems = new List<SelectListItem>();
+    listItems.Add(new SelectListItem { Text = "Active", Value = "A" });
+    listItems.Add(new SelectListItem { Text = "Inactive", Value = "I" });
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    
+
+    <div id="contentHeaderBox">
+        <h1>Detail's Information</h1>
+    </div>
+    <br />
+    <div class="col-md-12">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Compid, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Compid, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Compnm, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Compnm, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Address, htmlAttributes: new { @class = "control-label" })
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Address, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Address2, htmlAttributes: new { @class = "control-label" })
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Address2, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Contactno, htmlAttributes: new { @class = "control-label" })
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Contactno, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Emailid, htmlAttributes: new { @class = "control-label" })
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Emailid, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Webid, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Webid, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Status, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Status, listItems, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Promotion Email ID: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Emailidp, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Promotion Email Password: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Emailpwp, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "SMS Sender Name: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Smssendernm, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Promotion SMS ID: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Smsidp, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Promotion SMS Password: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Smspwp, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Userpc, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Userpc, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Insuserid, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Insuserid, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Instime, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Instime, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Insipno, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Insipno, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Insltude, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Insltude, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Upduserid, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Upduserid, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Updtime, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Updtime, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Updipno, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Updipno, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.LabelFor(model => model.Updltude, htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Updltude, htmlAttributes: new { @class = "form-control", data_val = false, @readonly = "readonly" })
+                </div>
+            </div>
+            <br />
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-8">
+                    @Html.ActionLink("Edit", "Edit", new { id = Model.Compid }) |
+                    @Html.ActionLink("Back to List", "Index")
+                </div>
+            </div>
+
+        </div>
+    </div>
+    
+
+}
+

@@ -1,0 +1,282 @@
+﻿@using System.Web.Optimization
+@using cloud_Api_MCR.Models
+@model cloud_Api_MCR.Models.ASL_DTO.MailDTO
+@{
+    ViewBag.Title = "Index";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedToken = HttpContext.Current.Session["loggedToken"]?.ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserId = HttpContext.Current.Session["loggedUserID"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    Int64 LoggedCompId = Convert.ToInt64(loggedCompId);
+    Int64 LoggedUserId = Convert.ToInt64(loggedUserId);
+    DatabaseDbContext db = new DatabaseDbContext();
+
+
+    string companyName = "";
+    var findComanyName = (from m in db.AslCompanyDbSet where m.Compid == LoggedCompId select new { m.Compnm });
+    foreach (var comp in findComanyName)
+    {
+        companyName = comp.Compnm;
+    }
+
+
+    var permission_Check = from m in db.AslRoleDbSet where m.Compid == LoggedCompId && m.Userid == LoggedUserId && m.Controllername == "SmsMember" select m;
+    var Status = "";
+    foreach (var check in permission_Check)
+    {
+        Status = check.Status;
+    }
+    if (Status == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+
+    List<SelectListItem> listOfGroup = new List<SelectListItem>();
+    listOfGroup.Add(new SelectListItem { Text = "All Member", Value = "Member" });
+    listOfGroup.Add(new SelectListItem { Text = "Scheme Wise", Value = "Scheme" });
+    listOfGroup.Add(new SelectListItem { Text = "Area Wise", Value = "Area" });
+
+
+    List<SelectListItem> listOfScheme = new List<SelectListItem>();
+    var result1 = (from n in db.McrSchemesDbSet where n.Compid == LoggedCompId select n).OrderBy(x => x.Schemeid).Distinct().ToList();
+    foreach (var n in result1)
+    {
+        listOfScheme.Add(new SelectListItem { Text = n.Schemeid, Value = n.Schemeid.ToString() });
+    }
+
+
+    List<SelectListItem> listOfArea = new List<SelectListItem>();
+    var result2 = (from n in db.McrAreasDbSet where n.Compid == LoggedCompId select n).OrderBy(x => x.Areanm).Distinct().ToList();
+    foreach (var n in result2)
+    {
+        listOfArea.Add(new SelectListItem { Text = n.Areanm, Value = n.Areaid.ToString() });
+    }
+}
+
+<!-- INSTRUCTIONS -->
+<!-- 2 CSS files are required: -->
+<!--   * Tag-it's base CSS (jquery.tagit.css). -->
+<!--   * Any theme CSS (either a jQuery UI theme such as "flick", or one that's bundled with Tag-it, e.g. tagit.ui-zendesk.css as in this example.) -->
+<!-- The base CSS and tagit.ui-zendesk.css theme are scoped to the Tag-it widget, so they shouldn't affect anything else in your site, unlike with jQuery UI themes. -->
+<link href="../../Content/tag-it-CSS/jquery.tagit.css" rel="stylesheet" />
+<link href="../../Content/tag-it-CSS/tagit.ui-zendesk.css" rel="stylesheet" />
+<!-- If you want the jQuery UI "flick" theme, you can use this instead, but it's not scoped to just Tag-it like tagit.ui-zendesk is: -->
+<!--   <link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1/themes/flick/jquery-ui.css"> -->
+<!-- jQuery and jQuery UI are required dependencies. -->
+<!-- Although we use jQuery 1.4 here, it's tested with the latest too (1.8.3 as of writing this.) -->
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.9.2/jquery-ui.min.js" type="text/javascript" charset="utf-8"></script>
+
+<!-- The real deal -->
+@*<script src="~/Scripts/tag-it/tag-it.js"></script>*@
+<script src="../../Scripts/tag-it/tag-it.js"></script>
+
+
+@using (Html.BeginForm())
+{
+
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    //Its not mandatory field its used because this is required attribute. That why default value inserted.
+    @Html.HiddenFor(model => model.CompId, htmlAttributes: new { @class = "form-control", @Value = LoggedCompId, id = "txtHiddenCompid" })
+    @Html.HiddenFor(model => model.Subject, htmlAttributes: new { @class = "form-control", @Value = "Subject" })
+    @Html.HiddenFor(model => model.CompanyName, htmlAttributes: new { @class = "form-control", @Value = companyName })
+
+    <div id="contentHeaderBox">
+        @if (TempData["SMS_MemberMessage"] != null)
+        {
+            <h1 style="padding-left: 16px;">Sending SMS <span style="color: red; padding-left: 81px;">@TempData["SMS_MemberMessage"]</span> </h1>
+        }
+        else if (ViewBag.SMS_MemberMessage != null)
+        {
+            <h1 style="padding-left: 16px;">Sending SMS <span style="color: red; padding-left: 70px;">@ViewBag.SMS_MemberMessage</span> </h1>
+        }
+        else
+        {
+            <h1 style="padding-left:16px">Sending SMS (Member)</h1>
+        }
+        <div class="btn-group pull-right" id="editOption">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" aria-expanded="false">
+                <i class="fa fa-cog"></i>
+            </button>
+            <ul class="dropdown-menu pull-right" style="" role="menu">
+                <li>
+                    <a href="@Url.Action("getPendingSMS","Sms")"><i class="fa fa-file-text"></i> Pending SMS Info.</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <br />
+    <div class="col-md-12" ng-app="">
+        <div class="form-group">
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Select: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.Select, listOfGroup, "-Select-", new { @class = "form-control", id = "ddlSelectID", autofocus = true })
+                </div>
+                <div class="col-md-3 text-right" style="font-size: 20px">
+                    @Html.Label("name", "Credit: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3 text-left" style="font-size: 20px">
+                    <label>@TempData["CheckSMSQuantity"] </label>
+                </div>
+            </div>
+            <br />
+            <div class="row" id="schemeRow">
+                <div class="col-md-3">
+                    @Html.Label("name", "Scheme Wise All Member: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.SchemeId, listOfScheme, "-Select-", new { @class = "form-control", id = "ddlSchemeID" })
+                </div>
+            </div>
+            <div class="row" id="areaRow">
+                <div class="col-md-3">
+                    @Html.Label("name", "Area wise All Member: ", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.AreaId, listOfArea, "-Select-", new { @class = "form-control", id = "ddlAreaID", autofocus = true })
+                </div>
+            </div>
+
+            <hr />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Language: ")
+                </div>
+                <div class="col-md-8">
+                    @Html.RadioButtonFor(model => model.Language, "ENG", htmlAttributes: new { @class = "radio-inline", id = "btnEng", @checked = "checked" }) English
+                    @Html.RadioButtonFor(model => model.Language, "BNG", htmlAttributes: new { @class = "radio-inline", id = "btnBan" }) Bangla
+                </div>
+            </div>
+
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Message Body: ")
+                </div>
+                <div class="col-md-5">
+                    <textarea class="form-control"
+                              cols="20"
+                              id="Body"
+                              name="Body"
+                              rows="4" ng-model="Body" maxlength="158"></textarea>
+                    @*@Html.TextAreaFor(model => model.Body, htmlAttributes: new { @class = "form-control",  data_ng_model = "Body", MaxLength = "158", Height = "150px", })*@
+                    @Html.ValidationMessageFor(model => model.Body, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-3" id="charleft" style="color: green;">
+                    <span class="a" ng-bind="158-Body.length+'&nbsp;&nbsp;Character left'"
+                          ng-class="{'btn-warning': Body.length >= 120, 'btn-danger': Body.length >= 141 }"></span>
+                    <span class="b" ng-bind="(158/2-Body.length) +'&nbsp;&nbsp;Character left'" hidden=""
+                          ng-class="{'btn-warning': Body.length >= 50, 'btn-danger': Body.length >= 75 }"></span>
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-2">
+                    <input type="submit" class="btn btn-primary btn-block" value="Send" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+
+            $(".a").show();
+
+            $("#btnEng").click(function () {
+                $(".b").hide();
+                $(".a").show();
+            });
+            $("#btnBan").click(function () {
+                $(".b").show();
+                $(".a").hide();
+            });
+
+
+            $('#schemeRow').hide();
+            $('#areaRow').hide();
+
+            $('#ddlSelectID').change(function () {
+                var changedtxt = $('#ddlSelectID').val();
+                if (changedtxt === "Member") {
+                    $('#schemeRow').hide();
+                    $('#areaRow').hide();
+                    $('#ddlSchemeID').prop('disabled', true);
+                    $('#ddlAreaID').prop('disabled', true);
+                }
+                else if (changedtxt === "Scheme") {
+                    $('#schemeRow').show();
+                    $('#areaRow').hide();
+                    $('#ddlSchemeID').prop('disabled', false);
+                    $('#ddlAreaID').prop('disabled', true);
+                }
+                else {//Area
+                    $('#schemeRow').hide();
+                    $('#areaRow').show();
+                    $('#ddlSchemeID').prop('disabled', true);
+                    $('#ddlAreaID').prop('disabled', false);
+                }
+            });
+
+
+        });
+    </script>
+
+
+
+    <style type="text/css">
+        .ui-autocomplete {
+            position: absolute;
+            cursor: default;
+            background: #f0ffff;
+            max-height: 200px;
+            overflow-y: auto;
+            /* prevent horizontal scrollbar */
+            overflow-x: hidden;
+            /* add padding to account for vertical scrollbar */
+            padding-right: 20px;
+        }
+    </style>
+
+
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+
+
+
+<script src="../../Scripts/angularjs/1.0.5/angular.js"></script>

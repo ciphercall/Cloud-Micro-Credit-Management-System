@@ -1,0 +1,497 @@
+﻿@using cloud_Api_MCR.Models.ASL_DTO
+@model cloud_Api_MCR.Models.ASL_DTO.ViewAslUserco
+
+@{
+    ViewBag.Title = "Update";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompanyStatus = HttpContext.Current.Session["loggedCompanyStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "User") && loggedUserStatus == "A" && loggedCompanyStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    
+
+    List<SelectListItem> listStatus = new List<SelectListItem>();
+    listStatus.Add(new SelectListItem { Text = "Active", Value = "A" });
+    listStatus.Add(new SelectListItem { Text = "Inactive", Value = "I" });
+
+    List<SelectListItem> listLogInBy = new List<SelectListItem>();
+    listLogInBy.Add(new SelectListItem { Text = "Mobile Number", Value = "MOBNO" });
+    listLogInBy.Add(new SelectListItem { Text = "Email Address", Value = "EMAIL" });
+
+    List<SelectListItem> listOpTp = new List<SelectListItem>();
+    if (loggedUserTp == "CADMIN")
+    {
+        listOpTp.Add(new SelectListItem { Text = "Company Admin", Value = "CADMIN" });
+        listOpTp.Add(new SelectListItem { Text = "User Admin", Value = "UADMIN" });
+        listOpTp.Add(new SelectListItem { Text = "User", Value = "USER" });
+    }
+    else
+    {
+        listOpTp.Add(new SelectListItem { Text = "User Admin", Value = "UADMIN" });
+        listOpTp.Add(new SelectListItem { Text = "User", Value = "USER" });
+    }
+
+
+
+
+
+    // User Field loaded in DropdownList
+    List<SelectListItem> listOfUser = new List<SelectListItem>();
+    if (TempData["passData_SelectUserList"] != null)
+    {
+        List<ViewAslUserco> passDataComapnyList = (List<ViewAslUserco>)TempData["passData_SelectUserList"];
+        foreach (var n in passDataComapnyList)
+        {
+            listOfUser.Add(new SelectListItem { Text = n.Loginid, Value = n.Userid.ToString() });
+        }
+    }
+
+
+
+    var createStatus = "";
+    var updateStatus = "";
+    var deleteStatus = "";
+    var viewStatus = "";
+    ViewAslRole roleInfo = new ViewAslRole();
+    roleInfo = (ViewAslRole)TempData["UserRoleInfo"];
+    if (roleInfo != null)
+    {
+        viewStatus = roleInfo.Status;
+        createStatus = roleInfo.Insertr;
+        updateStatus = roleInfo.Updater;
+        deleteStatus = roleInfo.Deleter;
+    }
+
+
+    if (updateStatus == "A")
+    {
+
+    }
+    else if (createStatus == "A")
+    {
+        Response.Redirect("~/User/Create");
+    }
+    else if (deleteStatus == "A")
+    {
+        Response.Redirect("~/User/Delete");
+    }
+
+    if (viewStatus == "I")
+    {
+        Response.Redirect("~/Password/PasswordChangedForm");
+    }
+    if (updateStatus == "I")
+    {
+        Response.Redirect("~/Logout/Index");
+    }
+
+
+}
+
+
+
+<link href="~/Content/bootstrap-3.3.7-dist/css/bootstrap-theme.css" rel="stylesheet" />
+@*<script src="~/Content/bootstrap-3.3.7-dist/js/bootstrap.js"></script>*@
+@*bootstrap -Clock Picker*@
+<link href="~/Content/bootstrap-ClockPicker/src/clockpicker.css" rel="stylesheet" />
+<script src="~/Content/bootstrap-ClockPicker/src/clockpicker.js"></script>
+<link href="~/Content/bootstrap-ClockPicker/src/standalone.css" rel="stylesheet" />
+
+
+@*@using (Html.BeginForm("Update", "User", FormMethod.Post, new { id = "submitForm" }))*@
+@using (Html.BeginForm())
+{
+
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    @Html.HiddenFor(model => model.Compid, new { id = "HiddentxtCompanyID" })
+
+    <div id="contentHeaderBox">
+        <h1>Update User Information</h1>
+
+        <div class="btn-group pull-right" id="editOption">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" aria-expanded="false">
+                <i class="fa fa-cog"></i>
+            </button>
+            <ul class="dropdown-menu pull-right" style="" role="menu">
+                @if (createStatus == 'A'.ToString() && updateStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Create", "User")"><i class="fa fa-plus"></i> Create</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Update", "User")"><i class="fa fa-edit"></i> Update</a>
+                    </li>
+                        <li>
+                            <a href="@Url.Action("DeleteForm", "User")"><i class="fa fa-times"></i> Delete</a>
+                        </li>
+                }
+                else if (updateStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Update", "User")"><i class="fa fa-edit"></i> Update</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("DeleteForm", "User")"><i class="fa fa-times"></i> Delete</a>
+                    </li>
+                }
+                else if (createStatus == 'A'.ToString() && updateStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Create", "User")"><i class="fa fa-plus"></i> Create</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Update", "User")"><i class="fa fa-edit"></i> Update</a>
+                    </li>
+                }
+                else if (createStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Create", "User")"><i class="fa fa-plus"></i> Create</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("DeleteForm", "User")"><i class="fa fa-times"></i> Delete</a>
+                    </li>
+                }
+                else if (createStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Create", "User")"><i class="fa fa-plus"></i> Create</a>
+                    </li>
+                }
+                else if (updateStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Update", "User")"><i class="fa fa-edit"></i> Update</a>
+                    </li>
+                }
+                else if (deleteStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("DeleteForm", "User")"><i class="fa fa-times"></i> Delete</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    <br />
+
+    <div class="col-md-12">
+
+        @if (TempData["UserUpdateMessage"] != null)
+        {
+            <div class="panel-heading text-center">
+                <h4 style="color: #226699">@TempData["UserUpdateMessage"]</h4>
+            </div>
+        }
+
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "User Login ID", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Userid, listOfUser, "--Select User Name--", new { id = "txtID", @class = "form-control", autofocus = true })
+                    @*@Html.ValidationMessageFor(model => model.AslUserco.USERNM, "", new { @class = "text-danger" })*@
+
+                </div>
+            </div>
+
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "User Name")
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Usernm, htmlAttributes: new { id = "txtuserNameID", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Usernm, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Department Name")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Deptnm, htmlAttributes: new { id = "txtDepartmentNameID", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Deptnm, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Operation Type")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Optp, listOpTp, "--Select Operation Type--", htmlAttributes: new { id = "txtOperationTypeID", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Optp, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Address")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Address, htmlAttributes: new { id = "txtAddressID", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Address, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Mobile No")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Mobno, htmlAttributes: new { id = "txtMobileID", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Mobno, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Email ID")
+                </div>
+
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Emailid, htmlAttributes: new { id = "txtEmailID", @class = "form-control",  })
+                    @Html.ValidationMessageFor(model => model.Emailid, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Login By")
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Loginby, listLogInBy, "--Select LOGINBY--", htmlAttributes: new { id = "dropdownBoxId", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Loginby, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Login ID")
+                </div>
+                <div class="col-md-8">
+                    @Html.TextBoxFor(model => model.Loginid, htmlAttributes: new { id = "txtloginID", @class = "form-control", @readonly = "readonly", @*@data_val = "false"*@ })
+                    @Html.ValidationMessageFor(model => model.Loginid, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Login Password")
+                </div>
+                <div class="col-md-8">
+                    @Html.PasswordFor(model => model.Loginpw, htmlAttributes: new { id = "txtpasswordID", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Loginpw, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Time For")
+                </div>
+                <div class="col-md-8">
+                    <div class="input-group clockpicker" data-align="top" data-autoclose="true">
+                        @Html.TextBoxFor(model => model.Timefr, htmlAttributes: new { id = "txtTimeForID", @class = "form-control", @Value = "00:01" })
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-time"></span>
+                        </span>
+                    </div>
+                    @Html.ValidationMessageFor(model => model.Timefr, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Time To")
+                </div>
+                <div class="col-md-8">
+                    <div class="input-group clockpicker" data-align="top" data-autoclose="true">
+                        @Html.TextBoxFor(model => model.Timeto, htmlAttributes: new { id = "txtTimeToID", @class = "form-control", @Value = "23:59" })
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-time"></span>
+                        </span>
+                    </div>
+                    @Html.ValidationMessageFor(model => model.Timeto, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-3">
+                    @Html.Label("name", "Status")
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Status, listStatus, "--Select Status--", htmlAttributes: new { id = "ddldropStatusId", @class = "form-control" })
+                    @Html.ValidationMessageFor(model => model.Status, "", new { @class = "text-danger" })
+                </div>
+            </div>
+
+            @Html.TextBoxFor(model => model.Updltude, new { id = "latlon", style = "display: none;" })
+            <input id="lat" type="hidden" />
+            <input id="lon" type="hidden" />
+
+            <br />
+            <br />
+            <div class="row">
+                <div class="col-md-3"></div>
+                <div class="col-md-6">
+                    <input type="submit" class="btn btn-primary btn-block" name="command" value="Update" />
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+
+    //datatime picker script
+    <script type="text/javascript">
+        $('.clockpicker').clockpicker();
+    </script>
+
+
+
+    //Latitute & longitude
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <script language="javascript" type="text/javascript">
+        $(function () {
+            navigator.geolocation.getCurrentPosition(showPosition);
+            //navigator.geolocation.getCurrentPosition(showPosition, positionError);
+
+            function showPosition(position) {
+                var coordinates = position.coords;
+                $("#lat").val(coordinates.latitude);
+                $("#lon").val(coordinates.longitude);
+
+                $("#latlon").val(
+                    $("#lat").val() + "," + $("#lon").val()
+                );
+            }
+        });
+
+
+
+
+
+        //When login ID dropdown value selected then whole textbox fill loaded from database in specific user Information.
+        $(function () {
+
+            //1. Login ID: [    ]Dropdown box
+            $('#txtID').change(function () {
+                //When the UserName (Dropdown list) changed then get the "User ID" from "ASLUSERCO" table
+                var changedDropDown = $('#txtID option:selected').val();
+
+                var hiddentxtCompanyId = document.getElementById('HiddentxtCompanyID');
+                var txtuserName = document.getElementById('txtuserNameID');
+                var txtdepartmentName = document.getElementById('txtDepartmentNameID');
+                var txtOperationType = document.getElementById('txtOperationTypeID');
+                var txtAddress = document.getElementById('txtAddressID');
+                var txtMobile = document.getElementById('txtMobileID');
+                var txtEmail = document.getElementById('txtEmailID');
+                var dropdownBox = document.getElementById('dropdownBoxId');
+                var txtlogin = document.getElementById('txtloginID');
+                var txtpassword = document.getElementById('txtpasswordID');
+                var txtTimeFor = document.getElementById('txtTimeForID');
+                var txtTimeTo = document.getElementById('txtTimeToID');
+                var ddldropStatus = document.getElementById('ddldropStatusId');
+
+                $.getJSON(
+                   "/User/GetUserInformation", { "ChangedDropDown": changedDropDown },
+                   function (myData) {
+                       hiddentxtCompanyId.value = myData.COMPID;
+                       txtuserName.value = myData.USERNAME;
+                       txtdepartmentName.value = myData.DEPTNM;
+                       txtOperationType.value = myData.OPTP;
+                       txtAddress.value = myData.ADDRESS;
+                       txtMobile.value = myData.MOBNO;
+                       txtEmail.value = myData.EMAILID;
+                       dropdownBox.value = myData.LOGINBY;
+                       txtlogin.value = myData.LOGINID;
+                       txtpassword.value = myData.LOGINPASSWORD;
+                       txtTimeFor.value = myData.TIMERFOR;
+                       txtTimeTo.value = myData.TIMERTO;
+                       ddldropStatus.value = myData.STATUS;
+
+                       document.getElementById("txtuserNameID").focus();
+
+
+                   });
+
+                $("#txtuserNameID").val("");
+                $("#txtDepartmentNameID").val("");
+                $("#txtOperationTypeID").val("");
+                $("#txtAddressID").val("");
+                $("#txtMobileID").val("");
+                $("#txtEmailID").val("");
+                $("#dropdownBoxId").val("");
+                $("#txtloginID").val("");
+                $("#txtpasswordID").val("");
+                $("#txtTimeForID").val("");
+                $("#txtTimeToID").val("");
+                $("#ddldropStatusId").val("");
+
+            });
+
+
+            //passing value from textBox(Mobile Number,Email ID) to another textBox(Login By phoneNo/EmailId?) by selected dropdownList
+            $('#dropdownBoxId').change(function () {
+                // gets the value from the drop down box
+                var selected = $("#dropdownBoxId option:selected").text();
+
+                var txtMobile = $("#txtMobileID").val();
+                var txtEmail = $("#txtEmailID").val();
+                // puts the value into the textbox
+                var txtBox = document.getElementById('txtloginID');
+
+                if (selected == "Mobile Number") {
+                    txtBox.value = txtMobile;
+                }
+                else if (selected == "Email Address") {
+                    txtBox.value = txtEmail;
+                }
+            });
+
+        });
+
+    </script>
+}
+
+
+@section Scripts {
+   @Scripts.Render("~/bundles/jqueryui")
+@Scripts.Render("~/bundles/jqueryval")
+}

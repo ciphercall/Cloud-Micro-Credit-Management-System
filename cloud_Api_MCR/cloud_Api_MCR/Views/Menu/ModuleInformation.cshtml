@@ -1,0 +1,129 @@
+﻿@using cloud_Api_MCR.Models
+@model cloud_Api_MCR.Models.ASL_DTO.ViewAslMenumst
+
+@{
+    ViewBag.Title = "ModuleInformation";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedToken = HttpContext.Current.Session["loggedToken"]?.ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserId = HttpContext.Current.Session["loggedUserID"].ToString();
+    if (loggedUserTp == "SADMIN" && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+}
+
+<link href="~/Content/Angular-File/ng-grid.css" rel="stylesheet" />
+
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <div id="contentHeaderBox">
+        <h1 style="padding-left:16px">Module</h1>
+    </div>
+    <br />
+
+
+    <div class="col-md-12">
+        <div class="form-group">
+            <div ng-app="ModuleApp" data-ng-controller="ApiModuleController">
+                @Html.HiddenFor(model => model.Compid, new { id = "txtCid",  @Value = loggedCompId })
+                @Html.HiddenFor(model => model.Insuserid, new { id = "txtUid", @Value = loggedUserId })
+                @Html.HiddenFor(model => model.Token, new { id = "txtTid", @Value = loggedToken })
+                @Html.HiddenFor(model => model.Insltude, new { id = "latlon" })
+                <input id="lat" type="hidden" />
+                <input id="lon" type="hidden" />
+
+                <div class="row">
+                    @*<div class="col-md-1">
+                        </div>*@
+                    <div class="col-md-12">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">Information</div>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tr>
+                                        <th style="width: 10%">Module ID</th>
+                                        <th style="width: 70%">Module Name</th>
+                                        <th style="width: 20%"></th>
+                                    </tr>
+                                    <tr>
+                                        <td style="width: 10%"></td>
+                                        <td style="width: 70%"><input type="text" class="form-control" data-ng-model="newChild.Modulenm" id="txtModuleNameId" required/></td>
+                                        <td style="width: 20%"><input type="submit" value="Insert" data-ng-click="addrow($event)" class="btn btn-primary"/></td>
+                                    </tr>
+                                    <tr data-ng-repeat="testitem in ModuleData">
+                                        <td style="width: 10%">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Moduleid }}</p>
+                                        </td>
+                                        <td style="width: 70%">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Modulenm }}</p>
+                                            <input class="form-control" data-ng-show="testitem.editMode" type="text" data-ng-model="testitem.Modulenm" id="gridModuleNameId" />
+                                        </td>
+                                        <td style="width: 20%">
+                                            <p data-ng-hide="testitem.editMode"><a data-ng-click="toggleEdit(testitem)" href="javascript:;">Edit</a> | <a data-ng-click="deleteItem(testitem)" href="javascript:;">Delete</a></p>
+                                            <p data-ng-show="testitem.editMode"><a data-ng-click="update(testitem)" href="javascript:;">Save</a> | <a data-ng-click="toggleEdit_Cancel(testitem)" href="javascript:;">Cancel</a></p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    @*<div class="col-md-1">
+                        </div>*@
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    //Latitute & longitude
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <script language="javascript" type="text/javascript">
+        $(function () {
+            navigator.geolocation.getCurrentPosition(showPosition);
+            //navigator.geolocation.getCurrentPosition(showPosition, positionError);
+
+            function showPosition(position) {
+                var coordinates = position.coords;
+                $("#lat").val(coordinates.latitude);
+                $("#lon").val(coordinates.longitude);
+
+                $("#latlon").val(
+                    $("#lat").val() + "," + $("#lon").val()
+                );
+            }
+        });
+    </script>
+}
+
+
+<link href="~/Content/themes/base/jquery-ui.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-ui-1.10.4.min.js"></script>
+
+<script src="~/Scripts/angularjs/1.0.5/angular.js"></script>
+<script src="~/Scripts/ViewScripts/Menu/_ModuleInformation.js"></script>
+<script src="~/Scripts/angularjs/ui-bootstrap-tpls-0.4.0.js"></script>
+
+
+
+

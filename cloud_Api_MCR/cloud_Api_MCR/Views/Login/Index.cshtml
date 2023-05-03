@@ -1,0 +1,100 @@
+﻿@model cloud_Api_MCR.Models.ASL_DTO.ViewLoginModel
+
+@{
+    ViewBag.Title = "Login";
+    Layout = null;
+}
+
+<link href="~/Content/bootstrap-3.3.7-dist/css/bootstrap.css" rel="stylesheet" />
+<script src="~/Content/bootstrap-3.3.7-dist/js/jquery-2.1.0.min.js"></script>
+<script src="~/Content/bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+<link href="~/Content/aslLogin.css" rel="stylesheet" />
+
+@*font-awesome "Glyphicons"*@
+<link href="~/Content/font-awesome-4.2.0/css/font-awesome.css" rel="stylesheet" />
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <head>
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Alchemy Software|MCR (Micro Credit) </title>
+    </head>
+    <body>
+        <div class="container">
+            @if (ViewData["ErrorMessage"] != null)
+            {
+                <div class="row">
+                    <div class="col-md-3"></div>
+                    <div class="col-md-6">
+                        <div class="alert alert-danger text-center" role="alert">
+                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                            <h5>Warning!  @ViewData["ErrorMessage"]<i style="color: #ffffff" class="fa fa-question-circle fa-1x"></i></h5>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
+                </div>
+            }
+
+            <div class="form-signin sign">
+                <div>
+                    <br />
+                    @Html.TextBoxFor(m => m.Loginid, htmlAttributes: new { @class = "form-control", placeholder = "Login ID" })
+                    @Html.ValidationMessageFor(model => model.Loginid, "", new { @class = "text-danger" })
+
+                    @Html.PasswordFor(m => m.Loginpw, htmlAttributes: new { @class = "form-control", placeholder = "Password" })
+                    @Html.ValidationMessageFor(model => model.Loginpw, "", new { @class = "text-danger" })
+
+                    @Html.TextBoxFor(model => model.Logltude, new { id = "latlon", style = "display: none;" })
+                    <input id="lat" type="hidden" />
+                    <input id="lon" type="hidden" />
+
+                    <input class="btn btn-lg btn-primary btn-block" style="margin-top: 5px" type="submit" value="Sign in" />
+                    <a target="_blank" href="http://alchemy-bd.com/" class="pull-right need-help">Powered By- Alchemy Software</a><span class="clearfix"></span>
+                </div>
+            </div>
+        </div>
+
+    </body>
+
+    //Latitute & longitude
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <script language="javascript" type="text/javascript">
+        $(function () {
+            navigator.geolocation.getCurrentPosition(showPosition);
+            //navigator.geolocation.getCurrentPosition(showPosition, positionError);
+
+            function showPosition(position) {
+                var coordinates = position.coords;
+                $("#lat").val(coordinates.latitude);
+                $("#lon").val(coordinates.longitude);
+
+                $("#latlon").val(
+                    $("#lat").val() + "," + $("#lon").val()
+                );
+            }
+        });
+
+    </script>
+}
+
+
+
+@*@section Scripts {
+        @Scripts.Render("~/bundles/jqueryval")
+    }*@
+
+
+
+
+
+
+
+
+
+

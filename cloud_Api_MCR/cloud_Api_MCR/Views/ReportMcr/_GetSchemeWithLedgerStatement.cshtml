@@ -1,0 +1,175 @@
+﻿@using cloud_Api_MCR.DataAccess.OTHERS
+@using cloud_Api_MCR.Models.MCR_DTO
+@model cloud_Api_MCR.Models.MCR_DTO.ViewMcrListModel
+@{
+    ViewBag.Title = "_GetSchemeWithLedgerStatement";
+    Layout = null;
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+
+
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="~/Content/reportcss/style.css" rel="stylesheet" />
+</head>
+
+<body style="background-color:#fafafa;">
+    <div style="width: 960px; margin: 0px auto; border: 1px solid #d3d3d3; border-radius: 5px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); background: none repeat scroll 0 0 white;">
+        <table id="mainTable" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                </tr>
+                @Html.Partial("~/Views/Shared/_HeaderReportsDiv.cshtml")
+                <tr style="outline: thin solid">
+                    <th colspan="13" align="left" style="padding: 4px; font-weight: bold">Scheme with Ledger Statement</th>
+                    <th align="right" colspan="7" style="padding: 8px">Print:@currentDateTime.ToString("dd-MM-yy hh:mm tt")</th>
+                </tr>
+                <tr>
+                    <td colspan="10" style="padding:4px;font-weight:bold">From Date : <span style="font-weight: bold">@ViewBag.FromDate</span></td>
+                    <td colspan="10" style="font-weight: bold"> To Date : <span style="font-weight:bold">@ViewBag.ToDate</span></td>
+                </tr>
+                <tr style="background-color: #eeeeee; outline: thin solid">
+                    <td colspan="2" style="color: black; padding: 4px; font-weight: bold" align="center">Date</td>
+                    <td colspan="2" style="color: black; padding: 4px; font-weight: bold" align="center">Memo No</td>
+                    <td colspan="2" style="color: black; padding: 4px; font-weight: bold" align="center">Transaction Mode</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Account Name</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Scheme</td>
+                    <td colspan="2" style="color: black; padding: 4px; font-weight: bold" align="center">Internal ID</td>
+                    <td colspan="4" style="color: black; padding: 4px; font-weight: bold" align="center">Member Name</td>
+                    <td colspan="2" style="color: black; padding: 4px; font-weight: bold" align="center">Amount</td>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    Decimal totalGross = 0;
+                    var masterData = (from m in Model.MembersTransactionList
+                                      where (m.Transfor == "SCHEME TO LEDGER" || m.Transfor == "LEDGER TO SCHEME")
+                                      select new { m.Transfor }).Distinct().ToList();
+                    foreach (var masterdataList in masterData)
+                    {
+                        var childData = (from m in Model.MembersTransactionList
+                                         where m.Transfor == masterdataList.Transfor
+                                         select m).ToList();
+
+                        if (childData.Count != 0)
+                        {
+                            <tr>
+                                <td><br /></td>
+                            </tr>
+                            <tr>
+                                <td colspan="20" align="left" style="font-weight: bold; padding-left: 4px;">
+                                    TYPE-  @masterdataList.Transfor
+                                </td>
+                            </tr>
+                        }
+
+                        foreach (var childDatalist in childData)
+                        {
+                            DateTime date = Convert.ToDateTime(childDatalist.Transdt);
+                            String transDate = date.ToString("dd-MM-yy");
+
+                            String accountName = "";
+                            var findAccountName = (from m in Model.AccountChartList where m.Accountcd == childDatalist.Glheadid select new { m.Accountnm }).ToList();
+                            foreach (var get in findAccountName)
+                            {
+                                accountName = get.Accountnm;
+                            }
+
+                            String memberName = "";
+                            var findMemberName = (from m in Model.MembersList where m.Memberid == childDatalist.Memberid select new { m.Membernm }).ToList();
+                            foreach (var get in findMemberName)
+                            {
+                                memberName = get.Membernm;
+                            }
+
+                            String convertStringAmount = Convert.ToString(childDatalist.Amount);
+                            String cAmount = CommainAmount.AmountwithComma(convertStringAmount);
+
+                            <tr style="outline: thin solid #807575">
+                                <td align="left" colspan="2" style="padding-left: 4px">
+                                    @transDate
+                                </td>
+                                <td align="left" colspan="2" style="padding-left: 4px">
+                                    @childDatalist.Transno
+                                </td>
+                                <td align="left" colspan="2" style="padding-left: 4px">
+                                    @childDatalist.Transmode
+                                </td>
+                                <td align="left" colspan="3" style="padding-left: 4px">
+                                    @accountName
+                                </td>
+                                <td align="left" colspan="3" style="padding-left: 4px">
+                                    @childDatalist.Schemeid
+                                </td>
+                                <td align="left" colspan="2" style="padding-left: 4px">
+                                    @childDatalist.Internid
+                                </td>
+                                <td align="left" colspan="4" style="padding-left: 4px">
+                                    @memberName
+                                </td>
+                                <td align="right" colspan="2" style="padding-left: 4px">
+                                    @cAmount
+                                </td>
+                            </tr>
+                            totalGross = Convert.ToDecimal(totalGross + Convert.ToDecimal(childDatalist.Amount));
+                        }
+                    }
+
+                    String convertStringTotalGross = Convert.ToString(totalGross);
+                    String cTotalGross = CommainAmount.AmountwithComma(convertStringTotalGross);
+                }
+                <tr>
+                    <td align="right" colspan="18"><strong>Total Amount:</strong></td>
+                    <td align="right" colspan="2" style="font-weight: bold">
+                        @cTotalGross
+                    </td>
+                </tr>
+                <tr>
+                    <td><br /></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

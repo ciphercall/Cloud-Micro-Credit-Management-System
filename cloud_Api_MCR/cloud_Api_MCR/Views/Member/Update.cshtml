@@ -1,0 +1,623 @@
+﻿@using cloud_Api_MCR.Models.ASL_DTO
+@using cloud_Api_MCR.Models.MCR_DTO
+@model cloud_Api_MCR.Models.MCR_DTO.ViewMcrMember
+@{
+    ViewBag.Title = "Update";
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedToken = HttpContext.Current.Session["loggedToken"]?.ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserId = HttpContext.Current.Session["loggedUserID"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var createStatus = "";
+    var updateStatus = "";
+    var deleteStatus = "";
+    var viewStatus = "";
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+        ViewAslRole roleInfo = new ViewAslRole();
+        roleInfo = (ViewAslRole)TempData["UserRoleInfo"];
+        if (roleInfo != null)
+        {
+            viewStatus = roleInfo.Status;
+            createStatus = roleInfo.Insertr;
+            updateStatus = roleInfo.Updater;
+            deleteStatus = roleInfo.Deleter;
+        }
+    }
+
+    if (updateStatus == "A")
+    {
+
+    }
+    else if (createStatus == "A")
+    {
+        Response.Redirect("~/Member/Create");
+    }
+    else if (deleteStatus == "A")
+    {
+        Response.Redirect("~/Member/Delete");
+    }
+
+    if (viewStatus == "I" || updateStatus == "I")
+    {
+        Response.Redirect("~/GraphView/Index");
+    }
+
+
+
+
+    List<SelectListItem> listOfMemberName = new List<SelectListItem>();
+    if (TempData["passData_SelectMemberList"] != null)
+    {
+        List<ViewMcrMember> passDataCostPool = (List<ViewMcrMember>)TempData["passData_SelectMemberList"];
+        foreach (var n in passDataCostPool)
+        {
+            listOfMemberName.Add(new SelectListItem { Text = n.Membernm, Value = n.Memberid.ToString() });
+        }
+    }
+
+    List<SelectListItem> listOfStatus = new List<SelectListItem>();
+    listOfStatus.Add(new SelectListItem { Text = "ACTIVE", Value = "A" });
+    listOfStatus.Add(new SelectListItem { Text = "INACTIVE", Value = "I" });
+
+
+    List<SelectListItem> listOfReligion = new List<SelectListItem>();
+    listOfReligion.Add(new SelectListItem { Text = "Buddhism", Value = "Buddhism" });
+    listOfReligion.Add(new SelectListItem { Text = "Christianity", Value = "Christianity" });
+    listOfReligion.Add(new SelectListItem { Text = "Hinduism", Value = "Hinduism" });
+    listOfReligion.Add(new SelectListItem { Text = "Islam", Value = "Islam" });
+    listOfReligion.Add(new SelectListItem { Text = "Judaism", Value = "Judaism" });
+    listOfReligion.Add(new SelectListItem { Text = "Other religions", Value = "Other religions" });
+    listOfReligion.Add(new SelectListItem { Text = "Sikhism", Value = "Sikhism" });
+
+    // Branch loaded in DropdownList
+    List<SelectListItem> listOfBranch = new List<SelectListItem>();
+    List<ViewMcrBranch> getBranch = (List<ViewMcrBranch>)TempData["passData_SelectBranchList"];
+    listOfBranch.Add(new SelectListItem { Text = "-Select-", Value = "0" });
+    foreach (var n in getBranch)
+    {
+        listOfBranch.Add(new SelectListItem { Text = n.Branchnm, Value = n.Branchid.ToString() });
+    }
+
+
+    // Area loaded in DropdownList
+    List<SelectListItem> listOfArea = new List<SelectListItem>();
+    List<ViewMcrArea> getArea = (List<ViewMcrArea>)TempData["passData_SelectAreaList"];
+    listOfArea.Add(new SelectListItem { Text = "-Select-", Value = "0" });
+    foreach (var n in getArea)
+    {
+        listOfArea.Add(new SelectListItem { Text = n.Areanm, Value = n.Areaid.ToString() });
+    }
+}
+
+
+<link href="~/Content/bootstrap-Datepicker/datepicker.css" rel="stylesheet" />
+<link href="~/Content/bootstrap-Datepicker/datepicker3.css" rel="stylesheet" />
+<script src="~/Content/bootstrap-Datepicker/bootstrap-datepicker.js"></script>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <div id="contentHeaderBox">
+
+        @if (TempData["MemberUpdateMessage"] != null)
+        {
+            <h1 style="padding-left: 16px">
+                Update Member - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <span style="color: #c71817; font-style: italic;">@TempData["MemberUpdateMessage"]</span>
+            </h1>
+        }
+        else
+        {
+            <h1 style="padding-left: 16px">
+                Update Member
+            </h1>
+        }
+
+        <div class="btn-group pull-right" id="editOption">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" aria-expanded="false">
+                <i class="fa fa-cog"></i>
+            </button>
+            <ul class="dropdown-menu pull-right" style="" role="menu">
+                @if (createStatus == 'A'.ToString() && updateStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Create", "Member")"><i class="fa fa-plus"></i> Create</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Update", "Member")"><i class="fa fa-edit"></i> Update</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Delete", "Member")"><i class="fa fa-times"></i> Delete</a>
+                    </li>
+                }
+                else if (updateStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Update", "Member")"><i class="fa fa-edit"></i> Update</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Delete", "Member")"><i class="fa fa-times"></i> Delete</a>
+                    </li>
+                }
+                else if (createStatus == 'A'.ToString() && updateStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Create", "Member")"><i class="fa fa-plus"></i> Create</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Update", "Member")"><i class="fa fa-edit"></i> Update</a>
+                    </li>
+                }
+                else if (createStatus == 'A'.ToString() && deleteStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Create", "Member")"><i class="fa fa-plus"></i> Create</a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("Delete", "Member")"><i class="fa fa-times"></i> Delete</a>
+                    </li>
+                }
+                else if (createStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Create", "Member")"><i class="fa fa-plus"></i> Create</a>
+                    </li>
+                }
+                else if (updateStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Update", "Member")"><i class="fa fa-edit"></i> Update</a>
+                    </li>
+                }
+                else if (deleteStatus == 'A'.ToString())
+                {
+                    <li>
+                        <a href="@Url.Action("Delete", "Member")"><i class="fa fa-times"></i> Delete</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    <br />
+
+
+    <div class="col-md-12">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Member", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-9">
+                    @Html.DropDownListFor(model => model.Memberid, listOfMemberName, "-Select-", htmlAttributes: new { id = "txtMemberId", @class = "form-control", autofocus = true, @tabindex = "1" })
+                </div>
+            </div>
+            <hr />
+            <br />
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Member Name", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-9">
+                    @Html.TextBoxFor(model => model.Membernm, htmlAttributes: new { id = "txtMemberName", @class = "form-control", @tabindex = "1" })
+                    @Html.ValidationMessageFor(model => model.Membernm, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Guardian Name", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-9">
+                    @Html.TextBoxFor(model => model.Guardiannm, htmlAttributes: new { id = "txtGuardianName", @class = "form-control", @tabindex = "2" })
+                    @Html.ValidationMessageFor(model => model.Guardiannm, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Mother Name", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-9">
+                    @Html.TextBoxFor(model => model.Mothernm, htmlAttributes: new { id = "txtMotherName", @class = "form-control", @tabindex = "3" })
+                    @Html.ValidationMessageFor(model => model.Mothernm, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Present Address", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-9">
+                    @Html.TextBoxFor(model => model.Addrpre, htmlAttributes: new { id = "txtPresentAddress", @class = "form-control", @tabindex = "4" })
+                    @Html.ValidationMessageFor(model => model.Addrpre, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Permanent Address", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-9">
+                    @Html.TextBoxFor(model => model.Addrper, htmlAttributes: new { id = "txtPermanentAddress", @class = "form-control", @tabindex = "5" })
+                    @Html.ValidationMessageFor(model => model.Addrper, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Mobile No (1)", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Mobno1, htmlAttributes: new { id = "txtMobile1", @class = "form-control", @tabindex = "6" })
+                    @Html.ValidationMessageFor(model => model.Mobno1, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-3" Style="text-align: right">
+                    @Html.Label("Mobile No (2)", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Mobno2, htmlAttributes: new { id = "txtMobile2", @class = "form-control", @tabindex = "7" })
+                    @Html.ValidationMessageFor(model => model.Mobno2, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Date Of Birth", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Dob, htmlAttributes: new { id = "txtDateOfBirth", @class = "form-control", @tabindex = "8" })
+                    @Html.ValidationMessageFor(model => model.Dob, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-3" Style="text-align: right">
+                    @Html.Label("Age", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Age, htmlAttributes: new { id = "txtAge", @class = "form-control", @tabindex = "9" })
+                    @Html.ValidationMessageFor(model => model.Age, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Nationality", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Nationality, htmlAttributes: new {id = "txtNationality", @class = "form-control", @tabindex = "10",@Value = "BANGLADESHI" })
+                    @Html.ValidationMessageFor(model => model.Nationality, "", new {@class = "text-danger"})
+                </div>
+                <div class="col-md-3" Style="text-align: right">
+                    @Html.Label("NID", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Nid, htmlAttributes: new { id = "txtNid", @class = "form-control", @tabindex = "11" })
+                    @Html.ValidationMessageFor(model => model.Nid, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Religion", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                   @Html.DropDownListFor(model => model.Religion, listOfReligion, "- Select - ", htmlAttributes: new { id = "txtReligion", @class = "form-control", @tabindex = "12" })
+                    @Html.ValidationMessageFor(model => model.Religion, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-3" Style="text-align: right" >
+                    @Html.Label("Occupation", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Occupation, htmlAttributes: new { id = "txtOccupation", @class = "form-control", @tabindex = "13" })
+                    @Html.ValidationMessageFor(model => model.Occupation, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Reference Name", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-9">
+                    @Html.TextBoxFor(model => model.Refnm, htmlAttributes: new { id = "txtReferenceName", @class = "form-control", @tabindex = "14" })
+                    @Html.ValidationMessageFor(model => model.Refnm, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Reference Member ID", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                   @Html.DropDownListFor(model => model.Refmid, listOfMemberName, "-Select-", htmlAttributes: new { id = "txtReferenceMemberID", @class = "form-control", @tabindex = "15" })
+                    @Html.ValidationMessageFor(model => model.Refmid, "", new {@class = "text-danger"})
+                </div>
+                <div class="col-md-3" Style="text-align: right">
+                    @Html.Label("Reference Contact No", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Refcno, htmlAttributes: new { id = "txtReferenceContactNO", @class = "form-control", @tabindex = "16" })
+                    @Html.ValidationMessageFor(model => model.Refcno, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Share Certificate No", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Sharecno, htmlAttributes: new { id = "txtShareCertificateNo", @class = "form-control", @tabindex = "17" })
+                    @Html.ValidationMessageFor(model => model.Sharecno, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-3" Style="text-align: right">
+                    @Html.Label("Share Certificate Date", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Sharecdt, htmlAttributes: new { id = "txtShareCertificateDate", @class = "form-control", @tabindex = "18" })
+                    @Html.ValidationMessageFor(model => model.Sharecdt, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Area Name", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.Areaid, listOfArea, "-Select-", htmlAttributes: new {id = "txtAreaName", @class = "form-control", @tabindex = "19"})
+                    @Html.ValidationMessageFor(model => model.Areaid, "", new {@class = "text-danger"})
+                </div>
+                <div class="col-md-3" Style="text-align: right">
+                    @Html.Label("Branch Name", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.Branchid, listOfBranch, "-Select-", htmlAttributes: new { id = "txtBranchName", @class = "form-control", @tabindex = "20" })
+                    @Html.ValidationMessageFor(model => model.Branchid, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("A/C Opening Date", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Acopdt, htmlAttributes: new { id = "txtACOpeningDate", @class = "form-control", @tabindex = "21" })
+                    @Html.ValidationMessageFor(model => model.Acopdt, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-3" Style="text-align: right">
+                    @Html.Label("A/C Closing Date", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.TextBoxFor(model => model.Accldt, htmlAttributes: new { id = "txtACClosingDate", @class = "form-control", @tabindex = "22" })
+                    @Html.ValidationMessageFor(model => model.Accldt, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2" Style="text-align: left">
+                    @Html.Label("Status", htmlAttributes: new { @class = "control-label" })
+                </div>
+                <div class="col-md-3">
+                    @Html.DropDownListFor(model => model.Status, listOfStatus, htmlAttributes: new { id = "txtStatus", @class = "form-control", @tabindex = "23" })
+                    @Html.ValidationMessageFor(model => model.Status, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <br />
+
+            @Html.TextBoxFor(model => model.Updltude, new { id = "latlon", style = "display: none;" })
+            <input id="lat" type="hidden" />
+            <input id="lon" type="hidden" />
+
+            <div class="row">
+                <div class="col-md-2"></div>
+                <div class="col-md-3">
+                    <input type="submit" class="btn btn-primary btn-block" value="Update" name="command" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <script language="javascript" type="text/javascript">
+        $(function () {
+            navigator.geolocation.getCurrentPosition(showPosition);
+
+            function showPosition(position) {
+                var coordinates = position.coords;
+                $("#lat").val(coordinates.latitude);
+                $("#lon").val(coordinates.longitude);
+
+                $("#latlon").val(
+                    $("#lat").val() + "," + $("#lon").val()
+                );
+            }
+
+            //function positionError(position) {
+            //    alert("!!! Error: "+position.code);
+            //}
+        });
+
+
+        $(document).ready(function () {
+
+            $('#txtDateOfBirth').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function (e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                } else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function (e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+                document.getElementById("txtAge").focus();
+            });
+
+
+
+            $('#txtShareCertificateDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function (e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                } else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function (e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+                document.getElementById("txtAreaName").focus();
+            });
+
+
+            $('#txtACOpeningDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function (e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                } else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function (e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+                document.getElementById("txtACClosingDate").focus();
+            });
+
+
+            $('#txtACClosingDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function (e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                } else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function (e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+                document.getElementById("txtStatus").focus();
+            });
+
+
+
+            $('#txtMemberId').change(function () {
+                var changedDropDown = $('#txtMemberId option:selected').val();
+
+                var txtMemberName = document.getElementById('txtMemberName');
+                var txtGuardianName = document.getElementById('txtGuardianName');
+                var txtMotherName = document.getElementById('txtMotherName');
+                var txtPresentAddress = document.getElementById('txtPresentAddress');
+                var txtPermanentAddress = document.getElementById('txtPermanentAddress');
+                var txtMobile1 = document.getElementById('txtMobile1');
+                var txtMobile2 = document.getElementById('txtMobile2');
+                var txtDateOfBirth = document.getElementById('txtDateOfBirth');
+                var txtAge = document.getElementById('txtAge');
+                var txtNationality = document.getElementById('txtNationality');
+                var txtNid = document.getElementById('txtNid');
+                var txtReligion = document.getElementById('txtReligion');
+                var txtOccupation = document.getElementById('txtOccupation');
+                var txtReferenceName = document.getElementById('txtReferenceName');
+                var txtReferenceMemberId = document.getElementById('txtReferenceMemberID');
+                var txtReferenceContactNo = document.getElementById('txtReferenceContactNO');
+                var txtShareCertificateNo = document.getElementById('txtShareCertificateNo');
+                var txtShareCertificateDate = document.getElementById('txtShareCertificateDate');
+                var txtAreaName = document.getElementById('txtAreaName');
+                var txtBranchName = document.getElementById('txtBranchName');
+                var txtAcOpeningDate = document.getElementById('txtACOpeningDate');
+                var txtAcClosingDate = document.getElementById('txtACClosingDate');
+                var txtStatus = document.getElementById('txtStatus');
+
+                $.getJSON(
+                   "/Member/GetMemberInformation", { "ChangedDropDown": changedDropDown },
+                   function (myData) {
+                       txtMemberName.value = myData.memberName;
+                       txtGuardianName.value = myData.guardiannm;
+                       txtMotherName.value = myData.mothernm;
+                       txtPresentAddress.value = myData.addrpresent;
+                       txtPermanentAddress.value = myData.addrpermanent;
+                       txtMobile1.value = myData.mobno1;
+                       txtMobile2.value = myData.mobno2;
+                       txtDateOfBirth.value = myData.dob1;
+                       txtAge.value = myData.age;
+                       txtNationality.value = myData.nationality;
+                       txtNid.value = myData.nid;
+                       txtReligion.value = myData.religion;
+                       txtOccupation.value = myData.occupation;
+                       txtReferenceName.value = myData.refname;
+                       txtReferenceMemberId.value = myData.refmid;
+                       txtReferenceContactNo.value = myData.refcno;
+                       txtShareCertificateNo.value = myData.sharecno;
+                       txtShareCertificateDate.value = myData.sharecdt1;
+                       txtAreaName.value = myData.areaid;
+                       txtBranchName.value = myData.branchid;
+                       txtAcOpeningDate.value = myData.acopdt1;
+                       txtAcClosingDate.value = myData.accldt1;
+                       txtStatus.value = myData.status;
+                       
+                       document.getElementById("txtBranchName").focus();
+                   });
+
+                $("#txtMemberName").val("");
+                $("#txtGuardianName").val("");
+                $("#txtMotherName").val("");
+                $("#txtPresentAddress").val("");
+                $("#txtPermanentAddress").val("");
+                $("#txtMobile1").val("");
+                $("#txtMobile2").val("");
+                $("#txtDateOfBirth").val("");
+                $("#txtAge").val("");
+                $("#txtNationality").val("");
+                $("#txtNid").val("");
+                $("#txtReligion").val("");
+                $("#txtOccupation").val("");
+                $("#txtReferenceName").val("");
+                $("#txtReferenceMemberId").val("");
+                $("#txtReferenceContactNo").val("");
+                $("#txtShareCertificateNo").val("");
+                $("#txtShareCertificateDate").val("");
+                $("#txtAreaName").val("");
+                $("#txtBranchName").val("");
+                $("#txtACOpeningDate").val("");
+                $("#txtACClosingDate").val("");
+                $("#txtStatus").val("");
+            });
+
+        });
+    </script>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryui")
+    @Scripts.Render("~/bundles/jqueryval")
+}

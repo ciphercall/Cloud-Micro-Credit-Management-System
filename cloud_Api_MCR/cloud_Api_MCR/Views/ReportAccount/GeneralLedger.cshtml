@@ -1,0 +1,151 @@
+﻿@using cloud_Api_MCR.Models
+@using cloud_Api_MCR.Models.Account_DTO
+@model cloud_Api_MCR.Models.Account_DTO.ViewAccountReportModel
+
+
+
+@{
+    ViewBag.Title = "GeneralLedger";
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedCompanyCode = Convert.ToInt64(System.Web.HttpContext.Current.Session["loggedCompID"].ToString());
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+
+    List<SelectListItem> listOfAccountHead = new List<SelectListItem>();
+    if (TempData["passData_SelectAccountChartList"] != null)
+    {
+        List<ViewGlAcchart> passData = (List<ViewGlAcchart>)TempData["passData_SelectAccountChartList"];
+        var getList = (from m in passData select m).ToList();
+        foreach (var n in getList)
+        {
+            listOfAccountHead.Add(new SelectListItem { Text = n.Accountnm, Value = n.Accountcd.ToString() });
+        }
+
+    }
+
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+
+}
+
+<link href="~/Content/bootstrap-Datepicker/datepicker.css" rel="stylesheet" />
+<link href="~/Content/bootstrap-Datepicker/datepicker3.css" rel="stylesheet" />
+<link href="~/Content/select2-4.0.3/css/select2.css" rel="stylesheet" /> <!--Select2 DropDown with Box -->
+<script src="~/Content/bootstrap-Datepicker/bootstrap-datepicker.js"></script>
+
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <div id="contentHeaderBox">
+        <h1 style="padding-left:16px">General Ledger</h1>
+    </div>
+    <br />
+    <div class="col-md-12">
+        <div class="form-group">
+            <div class="row">
+
+                <div class="col-md-4">
+                    <span>@Html.Label("name", "Account Head", htmlAttributes: new { @class = "control-label" })</span>
+                    @Html.DropDownListFor(model => model.Accountcd, listOfAccountHead, "--Select--", htmlAttributes: new { id = "txtAccountName", @class = "form-control input-sm", autofocus = true })
+                    @*@Html.ValidationMessageFor(model => model.HEADTP, "", new { @class = "text-danger" })*@
+                </div>
+
+                <div class="col-md-3">
+                    <span>@Html.Label("name", "From", htmlAttributes: new { @class = "control-label" })</span>
+                    @Html.TextBoxFor(model => model.FromDate, new { id = "fromDate", @class = "form-control input-sm", @Value = currentDateTime.ToString("dd-MMM-yyyy"), @tabindex = "2" })
+                    @Html.ValidationMessageFor(model => model.FromDate, "", new { @class = "text-danger" })
+                </div>
+
+                <div class="col-md-3">
+                    <span>@Html.Label("name", "To", htmlAttributes: new {@class = "control-label"})</span>
+                    @Html.TextBoxFor(model => model.ToDate, new {id = "toDate", @class = "form-control input-sm", @Value = currentDateTime.ToString("dd-MMM-yyyy"), @tabindex = "3"})
+                    @Html.ValidationMessageFor(model => model.ToDate, "", new {@class = "text-danger"})
+                </div>
+
+                <div class="col-md-2">
+                    <span><br /></span>
+                    <input type="submit" class="btn btn-success" value="Print" formtarget="_blank" />
+                </div>
+            </div>
+            
+        </div>
+    </div>
+
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $('#txtAccountName').select2({
+                placeholder: 'Select an option'
+            });
+
+            $('#fromDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function (e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                }
+                else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function (e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+                document.getElementById("toDate").focus();
+            });
+
+
+
+            $('#toDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function (e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                }
+                else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function (e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+            });
+        });
+    </script>
+}
+
+
+<script src="~/Content/select2-4.0.3/js/select2.full.min.js"></script> <!--Select2 DropDown with Box -->

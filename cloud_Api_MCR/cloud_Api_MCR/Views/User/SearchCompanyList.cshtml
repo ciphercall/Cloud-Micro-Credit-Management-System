@@ -1,0 +1,121 @@
+﻿@using System.Data
+@using System.Data.SqlClient
+@using cloud_Api_MCR.Models
+@using cloud_Api_MCR.Models.ASL_DTO
+@model cloud_Api_MCR.Models.ASL_DTO.ViewAslCompany
+
+
+@{
+    ViewBag.Title = "SearchCompanyList";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if (loggedUserTp == "SADMIN" && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+
+    // Company Name Field loaded in DropdownList
+    List<SelectListItem> aslCompanyName = new List<SelectListItem>();
+    List<ViewAslCompany> passData = (List<ViewAslCompany>)TempData["passData_SearchCompanyList"];
+    foreach (var n in passData)
+    {
+        aslCompanyName.Add(new SelectListItem { Text = n.Compnm, Value = n.Compid.ToString() });
+    }
+
+}
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(false)
+    
+    <div id="contentHeaderBox">
+        <h1 style="padding-left:16px">Search Company User List</h1>
+    </div>
+    <br />
+    <div class="col-md-12">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-4">
+                    @Html.Label("name", "Search Company Name: ")
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Compid, aslCompanyName, "Select Company Name", htmlAttributes: new { id = "ddlcompanyId", @class = "form-control", autofocus = true })
+                </div>
+            </div>
+        </div>
+
+
+        <div>
+            @if (TempData["UserCreationMessage"] != null)
+            {
+                <div class="panel-heading text-center">
+                    <h4 style="color: #226699">@TempData["UserCreationMessage"]</h4>
+                </div>
+            }
+        </div>
+
+
+        <div id="result_Table">
+            @Html.Partial("~/Views/User/_CompanyWiseUserInfo.cshtml")
+        </div>
+    </div>
+
+
+
+
+    //Auto complete
+    <script language="javascript" type="text/javascript">
+            $(document).ready(function () {
+
+                $('#ddlcompanyId').change(function () {
+
+                    var changedDropDown = $('#ddlcompanyId option:selected').val();
+                    //var companyId = document.getElementById('txtCompID');
+                    //Load Partial view
+                    $('#result_Table').load('@Url.Action("_CompanyWiseUserInfo")', { cid: changedDropDown });
+                    @*$.getJSON(
+                    "/AslUserCO/ComapnyNameChanged", { "ChangedDropDown": changedDropDown },
+
+                    function (myData) {
+                        companyId.value = myData;
+                        //var id = companyId.value;
+                        //Load Partial view
+                        $('#result-Table').load('@Url.Action("_CompanyWiseUserInfo")', { cid: changedDropDown });
+                    });*@
+                });
+
+
+                @*//this is button.
+                $('#buttonShowAllData').click(function (e) {
+                    var id = 0;
+                    e.preventDefault();
+                    $('#result-Table').load('@Url.Action("_CompanyWiseUserInfo", "User")', { cid: id });
+                });*@
+
+            });
+
+
+    </script>
+
+
+
+}
+
+
+<link href="~/Content/themes/base/jquery-ui.css" rel="stylesheet" />
+<script src="~/Scripts/jquery-1.10.2.min.js"></script>
+<script src="~/Scripts/jquery-ui-1.10.4.min.js"></script>
+
+

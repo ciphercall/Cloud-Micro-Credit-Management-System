@@ -1,0 +1,105 @@
+﻿@using cloud_Api_MCR.Models
+@using cloud_Api_MCR.Models.ASL_DTO
+@model IEnumerable<cloud_Api_MCR.Models.ASL_DTO.ViewAslUserco>
+
+@{
+    ViewBag.Title = "_CompanyWiseUserInfo";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if (loggedUserTp == "SADMIN" && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+}
+
+@if (Model != null)
+{
+    <div class="panel panel-primary">
+        <div class="panel-heading">Companies User Information</div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <tr>
+                    <th>
+                        ID
+                    </th>
+                    <th>
+                        User Name
+                    </th>
+                    <th>
+                        Operation Type
+                    </th>
+                    <th>
+                        Mobile No
+                    </th>
+                    <th>
+                        Email
+                    </th>
+                    <th>
+                        Time-For
+                    </th>
+                    <th>
+                        Time-To
+                    </th>
+                    <th>
+                        Login-ID
+                    </th>
+                    <th>
+                        Login-P
+                    </th>
+                    <th>
+                        Status
+                    </th>
+                    @*<th></th>*@
+                </tr>
+
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Userid)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Usernm)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Optp)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Mobno)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Emailid)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Timefr)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Timeto)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Loginid)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Loginpw)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Status)
+                        </td>
+                    </tr>
+                }
+
+            </table>
+        </div>
+    </div>
+}
+
+

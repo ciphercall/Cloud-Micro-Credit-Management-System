@@ -1,0 +1,156 @@
+﻿@using cloud_Api_MCR.DataAccess.OTHERS
+@model cloud_Api_MCR.Models.Account_DTO.ViewAccountListModel
+
+@{
+    ViewBag.Title = "_GetListOfAccountsHead";
+    Layout = null;
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedCompanyCode = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="~/Content/reportcss/style.css" rel="stylesheet" />
+</head>
+
+<body style=" background-color:#fafafa;">
+    <div style="width: 960px; margin: 0px auto; border: 1px solid #d3d3d3; border-radius: 5px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); background: none repeat scroll 0 0 white;">
+        <table id="mainTable" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                </tr>
+                @Html.Partial("~/Views/Shared/_HeaderReportsDiv.cshtml")
+                <tr>
+                    <th colspan="13" align="left" style="padding: 4px; font-weight: bold">Head Of Accounts</th>
+                    <th align="right" colspan="7" style="padding: 8px">Print:@currentDateTime.ToString("dd-MM-yy hh:mm tt")</th>
+                </tr>
+                <tr style="background-color: #eeeeee; outline: thin solid">
+                    <td style="color: black;padding:4px" colspan="11" align="center">Account Name</td>
+                    <td style="color: black;padding:4px" colspan="9" align="center">Remarks</td>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    Int64 maxHeadCD = Convert.ToInt64((from m in Model.AccountChartMasterList select m.Headcd).Max());
+                    Int64 minHeadCD = Convert.ToInt64((from m in Model.AccountChartMasterList select m.Headcd).Min());
+                    for (Int64 i = minHeadCD; i <= maxHeadCD; i++)
+                    {
+                        Int64 Current_HeadCD = i;
+                        var getList = (from m in Model.AccountChartList where m.Headcd == Current_HeadCD select m).ToList();
+
+                        if (getList.Count != 0)
+                        {
+                            string HeadName = "", headType = "";
+                            var getHeadName = (from m in Model.AccountChartMasterList where m.Headcd == Current_HeadCD select new {m.Headnm, m.Headtp});
+                            foreach (var get in getHeadName)
+                            {
+                                HeadName = get.Headnm;
+                                if (get.Headtp == 1)
+                                {
+                                    headType = "ASSET";
+                                }
+                                else if (get.Headtp == 2)
+                                {
+                                    headType = "LIABILITY";
+                                }
+                                else if (get.Headtp == 3)
+                                {
+                                    headType = "INCOME";
+                                }
+                                else if (get.Headtp == 4)
+                                {
+                                    headType = "EXPENDITURE";
+                                }
+                            }
+
+                            <tr>
+                                <td align="left" colspan="20">
+                                    <strong>@HeadName - @headType</strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="20"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="20"></td>
+                            </tr>
+
+                            Int64 count = Convert.ToInt64(getList.Count);
+                            Int64 j = 0;
+
+                            foreach (var item in getList)
+                            {
+                                j++;
+                                if (j == count)
+                                {
+                                    <tr style="outline: thin solid">
+                                        <td colspan="11" align="left" style="padding-left: 4px; font-size: small">
+                                            @Html.DisplayFor(modelItem => item.Accountnm)
+                                        </td>
+                                        <td colspan="9" align="left" style="font-size: small">
+                                            @Html.DisplayFor(modelItem => item.Remarks)
+                                        </td>
+                                    </tr>
+                                }
+                                else
+                                {
+                                    <tr style="outline: thin solid">
+                                        <td colspan="11" align="left" style="padding-left: 4px; font-size: small">
+                                            @Html.DisplayFor(modelItem => item.Accountnm)
+                                        </td>
+                                        <td colspan="9" align="left" style="font-size: small">
+                                            @Html.DisplayFor(modelItem => item.Remarks)
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            <tr>
+                                <td><br/></td>
+                            </tr>
+                        }
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

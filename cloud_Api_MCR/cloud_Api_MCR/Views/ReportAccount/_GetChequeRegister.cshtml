@@ -1,0 +1,342 @@
+﻿@using cloud_Api_MCR.DataAccess.OTHERS
+@model cloud_Api_MCR.Models.Account_DTO.ViewAccountListModel
+
+@{
+    ViewBag.Title = "_GetChequeRegister";
+    Layout = null;
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedCompanyCode = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+
+    String type = "";
+    if (ViewBag.Type == "MPAY")
+    {
+        type = "Issued";
+    }
+    else //if (ViewBag.Type == "MREC")
+    {
+        type = "Received";
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="~/Content/reportcss/style.css" rel="stylesheet" />
+</head>
+
+<body style=" background-color:#fafafa;">
+    <div style="width: 960px; margin: 0px auto; border: 1px solid #d3d3d3; border-radius: 5px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); background: none repeat scroll 0 0 white;">
+        <table id="mainTable" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                </tr>
+                @Html.Partial("~/Views/Shared/_HeaderReportsDiv.cshtml")
+                <tr>
+                    <th colspan="13" align="left" style="padding: 4px; font-weight: bold">Cheque Register</th>
+                    <th align="right" colspan="7" style="padding: 8px">Print:@currentDateTime.ToString("dd-MM-yy hh:mm tt")</th>
+                </tr>
+                <tr>
+                    <td colspan="20" style="padding:4px;font-weight:bold">Type : <span style="font-weight: bold">@type</span></td>
+                </tr>
+                <tr>
+                    <td colspan="10" style="padding:4px;font-weight:bold">From Date : <span style="font-weight: bold">@ViewBag.FromDate</span></td>
+                    <td colspan="10" style="font-weight: bold"> To Date : <span style="font-weight:bold">@ViewBag.ToDate</span></td>
+                </tr>
+            </thead>
+            <tbody>
+            @{
+                string convertbankId = Convert.ToString(loggedCompanyCode) + "102";
+                Int64 bankid = Convert.ToInt64(convertbankId);
+
+                decimal grandtotal = 0;
+                Int64 grandcount = 0;
+
+                var findBank = (from n in Model.AccountChartList where n.Headcd == bankid select n).ToList();
+                var findaccount = (from x in Model.AccountChartList select x).ToList();
+                }
+
+                @foreach (var forbank in findBank)
+                {
+                    <tr>
+                        <td><br /></td>
+                    </tr>
+                    <tr style="outline:thin initial">
+                        <td colspan="20">Bank Name : @forbank.Accountnm</td>
+                    </tr>
+                    var fetchdatafromMaster = (from n in Model.DateWiseAccountMasterList
+                                               where n.Transtp == ViewBag.Type && n.Transmode != "CASH" && n.Transmode != "EFT"
+                                               select n).ToList();
+                    int i = 0;
+                    decimal totalamt = 0;
+
+                    var findData = (from n in Model.DateWiseAccountMasterList
+                                    where n.Transtp == ViewBag.Type && n.Transmode != "CASH" && n.Transmode != "EFT" && n.Creditcd == forbank.Accountcd
+                                    select n).ToList();
+                    if (findData.Count != 0)
+                    {
+                        <tr style="background-color: #eeeeee; outline: thin solid">
+                            <td colspan="2" style="color: Black; padding: 4px; font-size: small" align="center">Date</td>
+                            <td colspan="2" style="color: Black; padding: 4px; font-size: small" align="center">Voucher No</td>
+                            <td colspan="2" style="color: Black; padding: 4px; font-size: small" align="center">Cheque No</td>
+                            <td colspan="2" style="color: Black; padding: 4px; font-size: small" align="center">Cheque Date</td>
+                            <td colspan="3" style="color: Black; padding: 4px; font-size: small" align="center">Transaction Mode</td>
+                            @if (ViewBag.Type == "MPAY")
+                            {
+                                <td colspan="6" style="color: Black; padding: 4px; font-size: small" align="center">Issued To</td>
+                            }
+                            else
+                            {
+                                <td colspan="6" style="color: Black; padding: 4px; font-size:small" align="center">Received To</td>
+                            }
+                            <td colspan="3" style="color: Black; padding: 4px; font-size:small" align="center">Amount</td>
+                        </tr>
+                    }
+                    
+                    foreach (var item in fetchdatafromMaster)
+                    {
+                        if (item.Transtp == "MREC" && item.Creditcd == forbank.Accountcd)
+                        {
+
+                            <tr>
+                                @{
+                                    string tdt = Convert.ToString(item.Transdt);
+                                    DateTime transdt = DateTime.Parse(tdt);
+                                    string stransdt = transdt.ToString("dd-MMM-yyyy");
+
+                                    string schequedt = "";
+                                    if (item.Chequedt != null)
+                                    {
+                                        string cdt = Convert.ToString(item.Chequedt);
+                                        DateTime chequedt = DateTime.Parse(cdt);
+                                        schequedt = chequedt.ToString("dd-MMM-yyyy");
+                                    }
+
+                                    string accname = "";
+                                    foreach (var m in findaccount)
+                                    {
+                                        if (m.Accountcd == item.Debitcd)
+                                        {
+                                            accname = m.Accountnm;
+                                            break;
+                                        }
+                                    }
+
+                                }
+                                <td colspan="2" style="font-size:small">@stransdt</td>
+                                <td colspan="2" style="font-size:small">@item.Transno</td>
+                                <td colspan="2" style="font-size:small">@item.Chequeno</td>
+                                <td colspan="2" style="font-size:small">@schequedt</td>
+                                <td colspan="3" style="font-size:small">@item.Transmode</td>
+                                <td colspan="6" style="font-size:small">@accname</td>
+
+                                @{
+                                    Int64 st5 = 0;
+                                    decimal rr = Convert.ToDecimal(item.Creditamt);
+                                    string Result = "";
+                                    if (rr < 0)
+                                    {
+                                        rr = rr * (-1);
+                                        string convertamount5 = Convert.ToString(rr);
+                                        Result = CommainAmount.AmountwithComma(convertamount5);
+                                        st5 = 1;
+                                    }
+                                    else
+                                    {
+                                        string convertamount5 = Convert.ToString(rr);
+                                        Result = CommainAmount.AmountwithComma(convertamount5);
+                                        st5 = 0;
+                                    }
+                                }
+                                @if (st5 == 1)
+                                {
+                                    <td colspan="3" align="right" style="font-size:small">-@Result</td>
+                                }
+                                else
+                                {
+                                    <td colspan="3" align="right" style="font-size:small">@Result</td>
+                                }
+                                @{
+                                    totalamt = Convert.ToDecimal(totalamt + item.Creditamt);
+                                }
+                            </tr>
+                                        i++;
+                                    }
+                                    else if (item.Transtp == "MPAY" && item.Creditcd == forbank.Accountcd)
+                                    {
+                                        <tr>
+                                            @{
+                                                string tdt = Convert.ToString(item.Transdt);
+                                                DateTime transdt = DateTime.Parse(tdt);
+                                                string stransdt = transdt.ToString("dd-MMM-yyyy");
+
+                                                string cdt = Convert.ToString(item.Chequedt);
+                                                DateTime chequedt = DateTime.Parse(cdt);
+                                                string schequedt = chequedt.ToString("dd-MMM-yyyy");
+                                                string accname = "";
+                                                foreach (var m in findaccount)
+                                                {
+                                                    if (m.Accountcd == item.Debitcd)
+                                                    {
+                                                        accname = m.Accountnm;
+                                                        break;
+                                                    }
+                                                }
+                                                var Accname = accname;
+
+                                            }
+                                            <td colspan="2" style="font-size:small">@stransdt</td>
+                                            <td colspan="2" style="font-size:small">@item.Transno</td>
+                                            <td colspan="2" style="font-size:small">@item.Chequeno</td>
+                                            <td colspan="2" style="font-size:small">@schequedt</td>
+                                            <td colspan="3" style="font-size:small">@item.Transmode</td>
+                                            <td colspan="6" style="font-size:small">@Accname</td>
+                                            @{
+                                                Int64 st5 = 0;
+                                                decimal rr = Convert.ToDecimal(item.Debitamt);
+                                                string Result = "";
+                                                if (rr < 0)
+                                                {
+                                                    rr = rr * (-1);
+                                                    string convertamount5 = Convert.ToString(rr);
+                                                    Result = CommainAmount.AmountwithComma(convertamount5);
+                                                    st5 = 1;
+                                                }
+                                                else
+                                                {
+                                                    string convertamount5 = Convert.ToString(rr);
+                                                    Result = CommainAmount.AmountwithComma(convertamount5);
+                                                    st5 = 0;
+                                                }
+                                            }
+                                            @if (st5 == 1)
+                                            {
+                                                <td colspan="3" align="right" style="font-size:small">-@Result</td>
+                                            }
+                                            else
+                                            {
+                                                <td colspan="3" align="right" style="font-size:small">@Result</td>
+                                            }
+
+                                            @{
+                                                totalamt = Convert.ToDecimal(totalamt + item.Debitamt);
+                                            }
+                                        </tr>
+                                                        i++;
+                                                    }
+
+                                                }
+
+
+                                                var count = i;
+                                                var total = totalamt;
+                                                string convertamountSubtotal = Convert.ToString(total);
+                                                string subTotoal = CommainAmount.AmountwithComma(convertamountSubtotal);
+                                                <tr>
+                                                    <td colspan="20"><hr style="height: 1px;color: #040404;background-color: #040404;border: none;"></td>
+                                                </tr>
+                                                <tr style="outline:thin initial">
+                                                    @if (ViewBag.Type == "MPAY")
+                                                    {
+                                                        <td colspan="11" align="right" style="font-weight: bold">
+                                                            Total Cheque Issued To @forbank.Accountnm : @count
+                                                        </td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td colspan="14" align="right" style="font-weight: bold">
+                                                            Total Cheque Received To @forbank.Accountnm : @count
+                                                        </td>
+                                                    }
+                                                    <td colspan="3" align="right" style="font-weight: bold">Total :</td>
+                                                    @if (subTotoal == "")
+                                                    {
+                                                        <td colspan="3" align="right" style="font-weight: bold">@total</td>
+                                                    }
+                                                    else
+                                                    {
+                                                        <td colspan="3" align="right" style="font-weight: bold">@subTotoal</td>
+                                                    }
+                                                </tr>
+                                                    grandcount = grandcount + i;
+                                                    grandtotal = grandtotal + totalamt;
+                                                }
+
+                @{
+                    string convertamount = Convert.ToString(grandtotal);
+                    string tGrand = CommainAmount.AmountwithComma(convertamount);
+                }
+
+                <tr>
+                    <td><br /></td>
+                </tr>
+                <tr>
+                    <td colspan="20"><hr style="height: 1px;color: #040404;background-color: #040404;border: none;"></td>
+                </tr>
+                <tr style="outline:thin initial">
+                    @if (ViewBag.Type == "MPAY")
+                    {
+                        <td colspan="14" align="right" style="font-weight: bold">
+                            Total Cheque Issued To All Bank : @grandcount
+                        </td>
+                    }
+                    else
+                    {
+                        <td colspan="14" align="right" style="font-weight: bold">
+                            Total Cheque Received To All Bank : @grandcount
+                        </td>
+                    }
+                    <td colspan="3" align="right" style="font-weight: bold">Grand Total :</td>
+                    @if (tGrand == "")
+                    {
+                        <td colspan="3" align="right" style="font-weight: bold">0.00</td>
+                    }
+                    else
+                    {
+                        <td colspan="3" align="right" style="font-weight: bold">@tGrand</td>
+                    }
+
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

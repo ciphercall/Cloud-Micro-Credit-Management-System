@@ -1,0 +1,546 @@
+﻿@using cloud_Api_MCR.DataAccess.OTHERS
+@model cloud_Api_MCR.Models.Account_DTO.ViewAccountListModel
+
+@{
+    ViewBag.Title = "_GetBalanceSheet";
+    Layout = null;
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedCompanyCode = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="~/Content/reportcss/style.css" rel="stylesheet" />
+</head>
+
+<body style=" background-color:#fafafa;">
+    <div style="width: 960px; margin: 0px auto; border: 1px solid #d3d3d3; border-radius: 5px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); background: none repeat scroll 0 0 white;">
+        <table id="mainTable" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                </tr>
+                @Html.Partial("~/Views/Shared/_HeaderReportsDiv.cshtml")
+                <tr>
+                    <th colspan="13" align="left" style="padding: 4px; font-weight: bold">Balance Sheet</th>
+                    <th align="right" colspan="7" style="padding: 8px">Print:@currentDateTime.ToString("dd-MM-yy hh:mm tt")</th>
+                </tr>
+                <tr>
+                    <td colspan="20" style="padding:4px;font-weight:bold">As On : <span style="font-weight: bold">@ViewBag.Date</span></td>
+                </tr>
+                <tr style="background-color: #eeeeee; outline: thin solid">
+                    <td colspan="14" style="color: black; padding: 4px; font-size: small" align="center">Head Particulars</td>
+                    <td colspan="6" style="color: black; padding: 4px; font-size: small" align="center">Amount</td>
+                </tr>
+            </thead>
+
+            <tbody>
+            @{
+                decimal sumdebit = 0, sumcredit = 0, result = 0, totalAsset = 0, totalLiability = 0;
+                int q = 1;
+
+                var debitcdfind = (from n in Model.LessThanEqualtoToDateWiseAccountMasterList select new { n.Debitcd }).Distinct().ToList();
+                var findaccountname = (from m in Model.AccountChartList select new { m.Accountcd, m.Accountnm }).ToList();
+                string status = "NO";
+                var tabledata = (from a in Model.LessThanEqualtoToDateWiseAccountMasterList select a).ToList();
+                var accountname = "";
+                string subdebit = "";
+                Int64 i = 0, j = 0;
+                decimal subTotalAsset = 0;
+                }
+                <tr>
+                    <td colspan="20" align="left" style="font-weight:bold;padding-left: 4px;font-size: 20px">ASSET</td>
+                </tr>
+                @{
+                    Int64 maxHeadCD_Asset = Convert.ToInt64((from m in Model.AccountChartMasterList where m.Headtp == 1 select m.Headcd).Max());
+                    Int64 minHeadCD_Asset = Convert.ToInt64((from m in Model.AccountChartMasterList where m.Headtp == 1 select m.Headcd).Min());
+
+                }
+                @for (Int64 z = minHeadCD_Asset; z <= maxHeadCD_Asset; z++)
+                {
+                    Int64 Current_HeadCD = z;
+                    var getList = (from m in Model.AccountChartList where m.Headcd == Current_HeadCD && m.Headtp == 1 select m).ToList();
+
+                    if (getList.Count != 0)
+                    {
+                        string HeadName = "", headType = "";
+                        var getHeadName = (from m in Model.AccountChartMasterList where m.Headcd == Current_HeadCD && m.Headtp == 1 select new { m.Headnm, m.Headtp }).ToList();
+                        foreach (var VARIABLE in getHeadName)
+                        {
+                            HeadName = VARIABLE.Headnm;
+                            break;
+                        }
+                        
+                        string datafind = "";
+                        foreach (var item1 in getList)
+                        {
+                            var debitcdfind1 = (from n in Model.LessThanEqualtoToDateWiseAccountMasterList select new { n.Debitcd }).Distinct().ToList();
+                            foreach (var item in debitcdfind1)
+                            {
+                                foreach (var x in findaccountname)
+                                {
+                                    datafind = "NO";
+                                    if (x.Accountcd == item.Debitcd && x.Accountcd == item1.Accountcd)
+                                    {
+                                        var aa1 = Convert.ToString(item.Debitcd).Substring(3, 1);
+                                        var tt1 = Convert.ToInt64(aa1);
+                                        if (tt1 == 1)
+                                        {
+                                            datafind = "YES";
+                                        }
+                                        break;
+                                    }
+                                }
+                                if (datafind == "YES")
+                                {
+                                    break;
+                                }
+                            }
+                            if (datafind == "YES")
+                            {
+                                break;
+                            }
+                        }
+
+                        if (datafind == "YES")
+                        {
+                            <tr>
+                                <td align="left" colspan="20" style="padding-left: 20px">
+                                    <strong>@HeadName</strong>
+                                </td>
+                            </tr>
+                        }
+
+
+                        subTotalAsset = 0;
+                        foreach (var list in getList)
+                        {
+                            foreach (var item in debitcdfind)
+                            {
+                                if (item.Debitcd == null)
+                                {
+                                    subdebit = "0";
+                                }
+                                else
+                                {
+                                    subdebit = item.Debitcd.ToString().Substring(3, 1);
+                                }
+
+                                if (subdebit == "1")
+                                {
+                                    status = "NO";
+                                    foreach (var x in findaccountname)
+                                    {
+                                        if (x.Accountcd == item.Debitcd && x.Accountcd == list.Accountcd)
+                                        {
+                                            accountname = x.Accountnm;
+                                            status = "YES";
+                                            break;
+                                        }
+                                    }
+                                    if (status == "YES")
+                                    {
+                                        if (i == 0)
+                                        {
+                                            <tr style="outline: thin solid">
+                                                <td colspan="14" style="padding-left: 28px">@accountname</td>
+                                                @{
+                                                    sumdebit = 0;
+                                                    sumcredit = 0;
+                                                }
+
+                                                @foreach (var x1 in tabledata)
+                                                {
+                                                    if (x1.Debitcd == item.Debitcd)
+                                                    {
+                                                        //var aa = Convert.ToString(item.DEBITCD).Substring(3, 1);
+                                                        //var tt = Convert.ToInt64(aa);
+                                                        sumdebit = Convert.ToDecimal(sumdebit + x1.Debitamt);
+                                                        sumcredit = Convert.ToDecimal(sumcredit + x1.Creditamt);
+                                                    }
+                                                }
+                                                @{
+                                                    result = sumdebit - sumcredit;
+                                                    decimal rr = 0;
+                                                    string resultamt = "";
+                                                    Int64 st2 = 0;
+
+                                                    if (result < 0)
+                                                    {
+                                                        rr = result * (-1);
+                                                        st2 = 1;
+                                                        string convertamount2 = Convert.ToString(rr);
+                                                        resultamt = CommainAmount.AmountwithComma(convertamount2);
+                                                    }
+                                                    else
+                                                    {
+                                                        st2 = 0;
+                                                        string convertamount2 = Convert.ToString(result);
+                                                        resultamt = CommainAmount.AmountwithComma(convertamount2);
+
+                                                    }
+                                                    subTotalAsset = Convert.ToDecimal(subTotalAsset + result);
+                                                    totalAsset = Convert.ToDecimal(totalAsset + result);
+                                                }
+                                                @if (st2 == 1)
+                                                {
+                                                    <td colspan="6" align="right">-@resultamt</td>
+                                                }
+                                                else
+                                                {
+                                                    <td colspan="6" align="right">@resultamt</td>
+                                                }
+                                            </tr>
+                                                        i = 1;
+                                                    }
+                                                    else
+                                                    {
+                                                        <tr style="outline: thin solid">
+                                                            <td colspan="14" style="padding-left: 28px">@accountname</td>
+                                                            @{
+                                                                sumdebit = 0;
+                                                                sumcredit = 0;
+                                                            }
+
+                                                            @foreach (var x1 in tabledata)
+                                                            {
+                                                                if (x1.Debitcd == item.Debitcd)
+                                                                {
+                                                                    //var aa = Convert.ToString(item.DEBITCD).Substring(3, 1);
+                                                                    //var tt = Convert.ToInt64(aa);
+                                                                    sumdebit = Convert.ToDecimal(sumdebit + x1.Debitamt);
+                                                                    sumcredit = Convert.ToDecimal(sumcredit + x1.Creditamt);
+                                                                }
+                                                            }
+                                                            @{
+                                                                result = sumdebit - sumcredit;
+                                                                decimal rr = 0;
+                                                                string resultamt = "";
+                                                                Int64 st1 = 0;
+                                                                if (result < 0)
+                                                                {
+                                                                    rr = result * (-1);
+                                                                    st1 = 1;
+                                                                    string convertamount2 = Convert.ToString(rr);
+                                                                    resultamt = CommainAmount.AmountwithComma(convertamount2);
+                                                                }
+                                                                else
+                                                                {
+                                                                    st1 = 0;
+                                                                    string convertamount2 = Convert.ToString(result);
+                                                                    resultamt = CommainAmount.AmountwithComma(convertamount2);
+                                                                }
+                                                                subTotalAsset = Convert.ToDecimal(subTotalAsset + result);
+                                                                totalAsset = Convert.ToDecimal(totalAsset + result);
+                                                            }
+
+                                                            @if (st1 == 1)
+                                                            {
+                                                                <td colspan="6" align="right">-@resultamt</td>
+                                                            }
+                                                            else
+                                                            {
+                                                                <td colspan="6" align="right">@resultamt</td>
+                                                            }
+                                                        </tr>
+                                                                                    i = 0;
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                }
+                                                                if (datafind == "YES")
+                                                                {
+                                                                    <tr style="outline: thin initial">
+                                                                        <td colspan="14" align="right" style="font-weight: bold;padding-left: 4px">Sub Total : </td>
+                                                                        @{
+                                                                            string subtotal = "";
+                                                                            if (subTotalAsset >= 0)
+                                                                            {
+                                                                                string convertsubtotal = Convert.ToString(subTotalAsset);
+                                                                                subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                int aa = Convert.ToString(subTotalAsset).Length;
+                                                                                string convertsubtotal = Convert.ToString(subTotalAsset).Substring(1, aa - 1);
+
+                                                                                subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                                                                subtotal = "-" + subtotal;
+                                                                            }
+                                                                        }
+                                                                        <td colspan="6" style="font-weight: bold" align="right">@subtotal</td>
+
+                                                                    </tr>
+                                                                                    }
+                                                                                }
+                                                                            }
+
+
+                @{
+                    decimal amt = 0, st = 0;
+                    if (totalAsset < 0)
+                    {
+                        amt = totalAsset * (-1);
+                        st = 1;
+                    }
+                    else
+                    {
+                        amt = totalAsset;
+                        st = 0;
+                    }
+                    string convertamount = Convert.ToString(amt);
+
+                    string tAsset = CommainAmount.AmountwithComma(convertamount);
+
+                }
+
+                <tr style="outline: thin solid">
+                    <td colspan="14" style="font-weight: bold;padding-left: 20px" align="right">Total ASSET : </td>
+                    @if (st == 0)
+                    {
+                        <td colspan="6" style="font-weight: bold" align="right">@tAsset</td>
+                    }
+                    else
+                    {
+                        <td colspan="6" style="font-weight: bold" align="right">-@tAsset</td>
+                    }
+
+                </tr>
+
+
+                <tr>
+                    <td><br /></td>
+                </tr>
+                <tr>
+                    <td colspan="20" style="font-weight:bold;padding-left: 4px;font-size: 20px" align="left">LIABILITY</td>
+                </tr>
+
+
+
+                @{
+                    Int64 maxHeadCD_LIABILITY = Convert.ToInt64((from m in Model.AccountChartMasterList where m.Headtp == 2 select m.Headcd).Max());
+                    Int64 minHeadCD_LIABILITY = Convert.ToInt64((from m in Model.AccountChartMasterList where  m.Headtp == 2 select m.Headcd).Min());
+                    
+                    DateTime tDate = Convert.ToDateTime(ViewBag.Date);
+                    string tdd = tDate.ToString("dd-MMM-yyyy");
+                    var Date = tdd;
+                    Decimal subLiability = 0;
+
+                }
+                @for (Int64 z = minHeadCD_LIABILITY; z <= maxHeadCD_LIABILITY; z++)
+                {
+                    Int64 Current_HeadCD = z;
+                    var getList2 = (from m in Model.AccountChartList where m.Headcd == Current_HeadCD && m.Headtp == 2
+                                    select m).ToList();
+
+                    if (getList2.Count != 0)
+                    {
+                        string HeadName = "", headType = "";
+                        var getHeadName = (from m in Model.AccountChartMasterList
+                                           where m.Headcd == Current_HeadCD && m.Headtp == 2
+                                           select new { m.Headnm, m.Headtp }).ToList();
+                        foreach (var VARIABLE in getHeadName)
+                        {
+                            HeadName = VARIABLE.Headnm;
+                            break;
+                        }
+
+                        string datafind = "";
+                        foreach (var list2 in getList2)
+                        {
+                            var geData = (from m in Model.BalanceSheetReportsList select m).ToList();
+                            Int64 debitcd = 0;
+                            Decimal Amount = 0;
+
+                            foreach (var get in geData)
+                            {
+                                debitcd = Convert.ToInt64(get.Debitcd);
+                                if (debitcd == list2.Accountcd)
+                                {
+                                    datafind = "YES";
+                                    break;
+                                }
+                            }
+                            if (datafind == "YES")
+                            {
+                                <tr>
+                                    <td align="left" colspan="20" style="padding-left: 20px">
+                                        <strong>@HeadName</strong>
+                                    </td>
+                                </tr>
+                                break;
+                            }
+                        }
+
+                        subLiability = 0;
+                        foreach (var list2 in getList2)
+                        {
+                            var geData = (from m in Model.BalanceSheetReportsList select m).ToList();
+
+                            string AccountName = "", result_amount = "";
+                            Int64 debitcd = 0;
+                            Decimal Amount = 0;
+
+                            //string companyid = Convert.ToString(compid);
+                            //string DebitCD = Convert.ToString(companyid + "2020001"),DebitCDD2="";
+
+                            foreach (var get in geData)
+                            {
+                                debitcd = Convert.ToInt64(get.Debitcd);
+                                AccountName = get.Accountnm;
+
+                                if (debitcd == list2.Accountcd)
+                                {
+                                    Amount = Convert.ToDecimal(get.Amount);
+
+                                    if (Amount >= 0)
+                                    {
+                                        string convertcurrentAmount = Convert.ToString(Amount);
+                                        result_amount = CommainAmount.AmountwithComma(convertcurrentAmount);
+                                    }
+                                    else
+                                    {
+                                        int aa = Convert.ToString(Amount).Length;
+                                        string convertcurrentAmount = Convert.ToString(Amount).Substring(1, aa - 1);
+                                        result_amount = CommainAmount.AmountwithComma(convertcurrentAmount);
+                                        result_amount = "-" + result_amount;
+                                    }
+
+
+                                    if (q == 1)
+                                    {
+                                        <tr style="outline: thin solid">
+                                            <td colspan="14" style="padding-left: 28px">@AccountName</td>
+                                            <td colspan="6" align="right">@result_amount</td>
+                                        </tr>
+                                        q = 0;
+                                    }
+                                    else
+                                    {
+                                        <tr style="outline: thin solid">
+                                            <td colspan="14" style="padding-left: 28px">@AccountName</td>
+                                            <td colspan="6" align="right">@result_amount</td>
+                                        </tr>
+                                        q = 1;
+                                    }
+
+                                    subLiability = Convert.ToDecimal(subLiability + Amount);
+                                    totalLiability = Convert.ToDecimal(totalLiability + Amount);
+                                }
+                            }
+
+
+
+                        }
+                        if (datafind == "YES")
+                        {
+                            <tr style="outline: thin initial">
+                                <td colspan="14" align="right" style="font-weight: bold;padding-left: 4px">Sub Total : </td>
+                                @{
+                                    string subtotal = "";
+                                    if (subLiability >= 0)
+                                    {
+                                        string convertsubtotal = Convert.ToString(subLiability);
+
+                                        subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                    }
+                                    else
+                                    {
+                                        int aa = Convert.ToString(subLiability).Length;
+                                        string convertsubtotal = Convert.ToString(subLiability).Substring(1, aa - 1);
+
+                                        subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                        subtotal = "-" + subtotal;
+                                    }
+                                }
+                                <td colspan="6" style="font-weight: bold" align="right">@subtotal</td>
+
+                            </tr>
+                                            }
+
+                                        }
+                                    }
+
+
+                @{
+                    decimal amt1 = 0, st4 = 0;
+                    string tLiability = "";
+                    if (totalLiability < 0)
+                    {
+                        amt1 = totalLiability * (-1);
+                        st4 = 1;
+                    }
+                    else
+                    {
+                        amt1 = totalLiability;
+                        st4 = 0;
+                    }
+                    string convertamount1 = Convert.ToString(amt1);
+                    if (convertamount1 == "0")
+                    {
+                        tLiability = "0";
+                    }
+                    else
+                    {
+                        tLiability = CommainAmount.AmountwithComma(convertamount1);
+                    }
+
+                }
+
+                <tr style="outline: thin solid">
+                    <td colspan="14" style="font-weight: bold;padding-left: 20px" align="right">Total LIABILITY : </td>
+                    @if (st4 == 0)
+                    {
+                        <td colspan="6" style="font-weight: bold" align="right">@tLiability</td>
+                    }
+                    else
+                    {
+                        <td colspan="6" style="font-weight: bold" align="right">-@tLiability</td>
+                    }
+                </tr>
+
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

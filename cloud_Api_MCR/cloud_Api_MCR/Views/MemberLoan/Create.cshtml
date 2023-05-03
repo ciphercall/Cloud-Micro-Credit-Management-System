@@ -1,0 +1,559 @@
+﻿@using cloud_Api_MCR.Models.MCR_DTO
+@using cloud_Api_MCR.Models.ASL_DTO
+@model cloud_Api_MCR.Models.MCR_DTO.ViewMcrMLoan
+@{
+    ViewBag.Title = "Create";
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedToken = HttpContext.Current.Session["loggedToken"]?.ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserId = HttpContext.Current.Session["loggedUserID"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var createStatus = "";
+    var updateStatus = "";
+    var deleteStatus = "";
+    var viewStatus = "";
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+        ViewAslRole roleInfo = new ViewAslRole();
+        roleInfo = (ViewAslRole) TempData["UserRoleInfo"];
+        if (roleInfo != null)
+        {
+            viewStatus = roleInfo.Status;
+            createStatus = roleInfo.Insertr;
+            updateStatus = roleInfo.Updater;
+            deleteStatus = roleInfo.Deleter;
+        }
+    }
+
+    if (createStatus == "A")
+    {
+
+    }
+    else if (updateStatus == "A")
+    {
+        Response.Redirect("~/MemberLoan/Update");
+    }
+    else if (deleteStatus == "A")
+    {
+        Response.Redirect("~/MemberLoan/Delete");
+    }
+
+    if (viewStatus == "I" || createStatus == "I")
+    {
+        Response.Redirect("~/GraphView/Index");
+    }
+
+    //Member loaded in DropdownList
+    List<SelectListItem> listOfMemberName = new List<SelectListItem>();
+    List<ViewMcrMember> passDataMember = new List<ViewMcrMember>();
+    if (TempData["passData_SelectMemberList"] != null)
+    {
+        passDataMember = (List<ViewMcrMember>)TempData["passData_SelectMemberList"];
+        foreach (var n in passDataMember)
+        {
+            listOfMemberName.Add(new SelectListItem { Text = n.Membernm, Value = n.Memberid.ToString() });
+        }
+    }
+
+
+    // Scheme loaded in DropdownList
+    List<SelectListItem> listOfScheme = new List<SelectListItem>();
+    List<ViewMcrScheme> passSchemeList = new List<ViewMcrScheme>();
+    if (TempData["passData_SelectSchemeList"] != null)
+    {
+        passSchemeList = (List<ViewMcrScheme>) TempData["passData_SelectSchemeList"];
+        foreach (var n in passSchemeList)
+        {
+            listOfScheme.Add(new SelectListItem {Text = n.Schemeid, Value = n.Schemeid.ToString()});
+        }
+    }
+
+
+    List<ViewMcrMLoan> memberLoanList = new List<ViewMcrMLoan>();
+    if (TempData["passData_MemberLoanList"] != null)
+    {
+        memberLoanList = (List<ViewMcrMLoan>) TempData["passData_MemberLoanList"];
+    }
+}
+
+
+<link href="~/Content/bootstrap-Datepicker/datepicker.css" rel="stylesheet" />
+<link href="~/Content/bootstrap-Datepicker/datepicker3.css" rel="stylesheet" />
+<link href="~/Content/select2-4.0.3/css/select2.css" rel="stylesheet" /> <!--Select2 DropDown with Box -->
+<link href="~/Content/select2-4.0.3/css/select2-bootstrap.css" rel="stylesheet" /><!--Select2 DropDown with Box -->
+<script src="~/Content/select2-4.0.3/js/select2.full.min.js"></script> <!--Select2 DropDown with Box -->
+<script src="~/Content/bootstrap-Datepicker/bootstrap-datepicker.js"></script>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <div id="contentHeaderBox">
+
+        @if (TempData["MemmberLoanCreateMessage"] != null)
+        {
+            <h1 style="padding-left: 16px">
+                Create Member Loan - &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <span style="color: #c71817; font-style: italic;">@TempData["MemmberLoanCreateMessage"]</span>
+            </h1>
+        }
+        else
+        {
+            <h1 style="padding-left: 16px">
+                Create Member Loan
+            </h1>
+        }
+    </div>
+    <br />
+
+    <div class="col-md-12">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-3">
+                    <span> <b>  Date</b></span>
+                    @Html.TextBoxFor(model => model.Transdt, htmlAttributes: new { id = "txtTransDate", @class = "form-control input-sm", autofocus = true, tabindex = "1" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Month</b></span>
+                    @Html.TextBoxFor(model => model.Transmy, htmlAttributes: new {id = "txtTransMonthYear", @class = "form-control input-sm", @readonly = "readonly", tabindex = "-1"})
+                    @Html.ValidationMessageFor(model => model.Transmy, "", new {@class = "text-danger"})
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Scheme Name</b></span>
+                    @Html.DropDownListFor(model => model.Schemeid, listOfScheme, "- Select -", htmlAttributes: new { id = "txtSchemeid", @class = "form-control input-sm", tabindex = "2" })
+                    @Html.ValidationMessageFor(model => model.Schemeid, "", new { @class = "text-danger" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Internal ID</b></span>
+                    @Html.DropDownListFor(model => model.Internid, new SelectList(string.Empty, "Value", "Text"), htmlAttributes: new { id = "txtInternId", @class = "form-control input-sm", tabindex = "3" })
+                    @Html.ValidationMessageFor(model => model.Internid, "", new { @class = "text-danger" })
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <span> <b>  Member Name</b></span>
+                    @Html.TextBoxFor(model => model.MemberName, htmlAttributes: new { id = "idMemberName", @class = "form-control input-sm", @tabindex = "-1", @readonly = "readonly" })
+                    @Html.HiddenFor(model => model.Memberid, htmlAttributes: new { id = "txtMemberId", @class = "form-control input-sm", })
+                </div>
+                <div class="col-md-6">
+                    <span> <b>  Loan Amount</b></span>
+                    @Html.TextBoxFor(model => model.Loanamt, htmlAttributes: new {id = "txtLoanAmount", @class = "form-control input-sm", type = "number", Step = "any", tabindex = "4", @Value = "0.00"})
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <span> <b>  Profit Charge(%)</b></span>
+                    @Html.TextBoxFor(model => model.Pchargert, htmlAttributes: new {id = "txtPrfitChargePercent", @class = "form-control input-sm", type = "number", Step = "any", @tabindex = "6", @Value = "0" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Profit Charge</b></span>
+                    @Html.TextBoxFor(model => model.Pchargeamt, htmlAttributes: new {id = "txtPrfitCharge", @class = "form-control input-sm", @readonly = "readonly", tabindex = "-1", @Value = "0" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Service Charge(%)</b></span>
+                    @Html.TextBoxFor(model => model.Schargert, htmlAttributes: new {id = "txtServiceChargePercent", @class = "form-control input-sm", type = "number", Step = "any", tabindex = "7", @Value = "0" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Service Charge</b></span>
+                    @Html.TextBoxFor(model => model.Schargeamt, htmlAttributes: new {id = "txtServiceCharge", @class = "form-control input-sm", @readonly = "readonly", @tabindex = "-1", @Value = "0"})
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <span> <b>  Disburse Amount</b></span>
+                    @Html.TextBoxFor(model => model.Disburseamt, htmlAttributes: new {id = "txtDisburseAmount", @class = "form-control input-sm", type = "number", Step = "any", @tabindex = "8", @readonly = "readonly", @Value = "0.00" })
+                    @Html.ValidationMessageFor(model => model.Disburseamt, "", new {@class = "text-danger"})
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Risk Fund (%)</b></span>
+                    @Html.TextBoxFor(model => model.Riskfundrt, htmlAttributes: new {id = "txtRiskFundPercent", @class = "form-control input-sm", type = "number", Step = "any", tabindex = "9", @Value = "0" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Risk Fund</b></span>
+                    @Html.TextBoxFor(model => model.Riskfundamt, htmlAttributes: new {id = "txtRiskFund", @class = "form-control input-sm", @readonly = "readonly", tabindex = "-1", @Value = "0" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Collect Amount </b></span>
+                    @Html.TextBoxFor(model => model.Collectamt, htmlAttributes: new {id = "txtCollectAmount", @class = "form-control input-sm", type = "number", Step = "any", @tabindex = "10", @Value = "0" })
+                    @Html.ValidationMessageFor(model => model.Collectamt, "", new {@class = "text-danger"})
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3">
+                    <span> <b>  Interest (%)</b></span>
+                    @Html.TextBoxFor(model => model.Interestrt, htmlAttributes: new {id = "txtInterestPercent", @class = "form-control input-sm", type = "number", Step = "any", @tabindex = "11", @Value = "0" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Scheme Qty</b></span>
+                    @Html.TextBoxFor(model => model.Schemeiqty, htmlAttributes: new {id = "txtSchemeQty", @class = "form-control input-sm", type = "number", Step = "any", @tabindex = "12", @Value = "0" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Effect From</b></span>
+                    @Html.TextBoxFor(model => model.Schemeefdt, htmlAttributes: new {id = "txtEffectFromDate", @class = "form-control input-sm", tabindex = "13"})
+                    @Html.ValidationMessageFor(model => model.Schemeefdt, "", new {@class = "text-danger"})
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  Effect To</b></span>
+                    @Html.TextBoxFor(model => model.Schemeetdt, htmlAttributes: new {id = "txtEffectToDate", @class = "form-control input-sm",  @tabindex = "14"})
+                    @Html.ValidationMessageFor(model => model.Schemeetdt, "", new {@class = "text-danger"})
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <span> <b>  Remarks</b></span>
+                    @Html.TextBoxFor(model => model.Remarks, htmlAttributes: new { id = "txtRemarks", @class = "form-control input-sm", @tabindex = "15" })
+                </div>
+                <div class="col-md-3">
+                    <span> <b>  <br /></b></span>
+                    <input type="submit" class="btn btn-primary btn-block" value="Create" name="command" />
+                </div>
+            </div>
+
+            @Html.TextBoxFor(model => model.Insltude, new {id = "latlon", style = "display: none;"})
+            <input id="lat" type="hidden" />
+            <input id="lon" type="hidden" />
+
+        </div>
+    </div>
+    <br />
+
+    <div class="col-md-12">
+        <div class="panel panel-primary">
+            <div class="panel-heading">Member Loan List - Current Month</div>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>
+                                Date
+                            </th>
+                            @*<th>
+                                Memo No
+                            </th>*@
+                            <th>
+                                Scheme
+                            </th>
+                            <th>
+                                Member Name
+                            </th>
+                            <th>
+                                Internal ID
+                            </th>
+                            <th>
+                                Loan Amount
+                            </th>
+                            <th>
+                                Profit Amount
+                            </th>
+                            <th>
+                                Service Amount
+                            </th>
+                            <th>
+                                Disburse Amount
+                            </th>
+                            @*<th>
+                                Risk Fund (%)
+                            </th>*@
+                            <th>
+                                Collect Amount
+                            </th>
+                            <th>
+                                Interest (%)
+                            </th>
+                            <th>
+                                Scheme Qty
+                            </th>
+                            <th>
+                                Effect From
+                            </th>
+                            <th>
+                                Effect To
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                      
+
+                        @foreach (var item in memberLoanList)
+                        {
+                            String date = Convert.ToString(item.Transdt.ToString("dd-MMM-yyyy"));
+                            String memberName = "";
+                            foreach (var n in passDataMember)
+                            {
+                                if (n.Memberid == item.Memberid)
+                                {
+                                    memberName = n.Membernm;
+                                }
+                            }
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        @date
+                                    </td>
+                                    @*<td>
+                                        @Html.DisplayFor(modelItem => item.Transno)
+                                    </td>*@
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Schemeid)
+                                    </td>
+                                    <td>
+                                        @memberName
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Internid)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Loanamt)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Pchargeamt)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Schargeamt)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Disburseamt)
+                                    </td>
+                                    @*<td>
+                                        @Html.DisplayFor(modelItem => item.Riskfundrt)
+                                    </td>*@
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Collectamt)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Interestrt)
+                                    </td>
+                                    <td>
+                                        @Html.DisplayFor(modelItem => item.Schemeiqty)
+                                    </td>
+                                    <td>
+                                        @item.Schemeefdt
+                                    </td>
+                                    <td>
+                                        @item.Schemeetdt
+                                    </td>
+                                    <td>
+                                        @if (updateStatus == "A")
+                                        {
+                                            @Html.ActionLink("Edit |", "Edit", new { monthYear = item.Transmy, transNo = item.Transno })
+                                        }
+                                        @if (deleteStatus == "A")
+                                        {
+                                            @Html.ActionLink("Delete", "Delete", new { monthYear = item.Transmy, transNo = item.Transno })
+                                        }
+                                    </td>
+                                </tr>
+                            </tbody>
+                        }
+
+               </table>
+            </div>
+        </div>
+    </div>
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <script language="javascript" type="text/javascript">
+        $(function() {
+            navigator.geolocation.getCurrentPosition(showPosition);
+
+            function showPosition(position) {
+                var coordinates = position.coords;
+                $("#lat").val(coordinates.latitude);
+                $("#lon").val(coordinates.longitude);
+
+                $("#latlon").val(
+                    $("#lat").val() + "," + $("#lon").val()
+                );
+            }
+
+            //function positionError(position) {
+            //    alert("!!! Error: "+position.code);
+            //}
+        });
+
+
+        $(document).ready(function() {
+            $('#txtTransDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function(e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                } else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function(e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+            }).on('changeDate', dateChanged);
+
+
+            function dateChanged() {
+                var txtTransDate = $('#txtTransDate').val();
+
+                var txttransMonthYear = document.getElementById('txtTransMonthYear');
+                $("#idTransMonth").val(" ");
+                $.getJSON(
+                    "/MemberLoan/DateChanged_getMonth", { "TxtTransDate": txtTransDate },
+                    function(myData) {
+                        txttransMonthYear.value = myData.month;
+                        document.getElementById("txtInternId").focus();
+                    });
+            };
+
+
+            $('#txtEffectFromDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function(e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                } else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function(e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+            });
+
+
+            $('#txtEffectToDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function(e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                } else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function(e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+            });
+
+            $('#txtSchemeid').select2({
+                placeholder: 'Select an option',
+                //width: '99%',
+                //theme: "bootstrap"
+            });
+
+
+            $('#txtInternId').select2({
+                placeholder: 'Select an option',
+                //width: '99%',
+                //theme: "bootstrap"
+            });
+
+            
+            
+
+            $('#txtSchemeid').change(function () {
+                $("#idMemberName").val(" ");
+                var schemeid = $('#txtSchemeid').val();
+                $.ajax
+                ({
+                    url: '@Url.Action("InternalIdLoadAfterSchemeSelect", "MemberLoan")',
+                    type: 'post',
+                    dataType: "json",
+                    data: { schemeId: schemeid },
+                    success: function (data) {
+                        $("#txtInternId").empty();
+                        $("#txtInternId").append('<option value="'
+                            + '">'
+                            + "--Select--" + '</option>');
+                        $.each(data, function (i, memo) {
+
+                            $("#txtInternId").append('<option value="'
+                                + memo.Value + '">'
+                                + memo.Text + '</option>');
+                        });
+                    }
+                });
+                document.getElementById("txtInternId").focus();
+            });
+
+
+
+            $('#txtInternId').change(function () {
+                var txtInternId = $('#txtInternId').val();
+                var txtSchemeId = $('#txtSchemeid').val();
+
+                var txtMemberName = document.getElementById('idMemberName');
+                var txtMember = document.getElementById('txtMemberId');
+                $("#idMemberName").val(" ");
+                $("#txtMemberId").val(" ");
+                $.getJSON(
+                    "/MemberLoan/GetMemberName", { "TxtInternId": txtInternId, "TxtSchemeId": txtSchemeId },
+                    function (myData) {
+                        txtMemberName.value = myData.MemberName;
+                        txtMember.value = myData.MemberId;
+                        document.getElementById("txtLoanAmount").focus();
+                    });
+            });
+
+
+
+            $("#txtLoanAmount").change(function () {
+                document.getElementById('txtDisburseAmount').value = (parseFloat(document.getElementById('txtLoanAmount').value) + parseFloat(document.getElementById('txtPrfitCharge').value) + parseFloat(document.getElementById('txtServiceCharge').value)).toFixed(2);
+            });
+
+            $("#txtPrfitChargePercent").change(function() {
+                document.getElementById('txtPrfitCharge').value = (document.getElementById('txtLoanAmount').value * (document.getElementById('txtPrfitChargePercent').value / 100)).toFixed(2);
+                document.getElementById('txtDisburseAmount').value = (parseFloat(document.getElementById('txtLoanAmount').value) + parseFloat(document.getElementById('txtPrfitCharge').value) + parseFloat(document.getElementById('txtServiceCharge').value)).toFixed(2);
+            });
+
+            $("#txtServiceChargePercent").change(function () {
+                document.getElementById('txtServiceCharge').value = (document.getElementById('txtLoanAmount').value * (document.getElementById('txtServiceChargePercent').value / 100)).toFixed(2);
+                document.getElementById('txtDisburseAmount').value = (parseFloat(document.getElementById('txtLoanAmount').value) + parseFloat(document.getElementById('txtPrfitCharge').value) + parseFloat(document.getElementById('txtServiceCharge').value)).toFixed(2);
+            });
+
+            $("#txtRiskFundPercent").change(function () {
+                document.getElementById('txtRiskFund').value = (document.getElementById('txtLoanAmount').value * (document.getElementById('txtRiskFundPercent').value / 100)).toFixed(2);
+            });
+        });
+    </script>
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryui")
+    @Scripts.Render("~/bundles/jqueryval")
+}
+
+
+
+
+

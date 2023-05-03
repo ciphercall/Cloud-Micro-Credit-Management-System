@@ -1,0 +1,79 @@
+﻿@using cloud_Api_MCR.Models
+@using cloud_Api_MCR.Models.MCR_DTO
+@model cloud_Api_MCR.Models.MCR_DTO.ViewMcrScheme
+
+@{
+    ViewBag.Title = "SchemeMemberInformation";
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+
+    List<SelectListItem> listOfSchemeName = new List<SelectListItem>();
+    if (TempData["passData_SelectSchemeList"] != null)
+    {
+        List<ViewMcrScheme> passDataCostPool = (List<ViewMcrScheme>)TempData["passData_SelectSchemeList"];
+        foreach (var n in passDataCostPool)
+        {
+            listOfSchemeName.Add(new SelectListItem { Text = n.Schemeid, Value = n.Schemeid.ToString() });
+        }
+    }
+}
+
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <div id="contentHeaderBox">
+        <h1 style="padding-left: 16px;">Scheme-Member Information</h1>
+    </div>
+    <br />
+
+    <div class="col-md-12">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-2">
+                    @Html.Label("name", "Scheme Name:    ")
+                </div>
+                <div class="col-md-8">
+                    @Html.DropDownListFor(model => model.Schemeid, listOfSchemeName, "-ALL-", htmlAttributes: new { id = "txtSchemeId", @class = "form-control", autofocus = true, @tabindex = "1" })
+                </div>
+            </div>
+
+            <br />
+            <div class="row">
+                <div class="col-md-2"></div>
+                <div class="col-md-8">
+                    <input type="submit" class="btn btn-success" value="Print" formtarget="_blank" />
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+}
+
+
+
+
+
+
+
+
+

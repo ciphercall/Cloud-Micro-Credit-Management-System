@@ -1,0 +1,852 @@
+﻿@using System.Data
+@using cloud_Api_MCR.Controllers.Account
+@using cloud_Api_MCR.DataAccess.OTHERS
+@using cloud_Api_MCR.Models
+@using cloud_Api_MCR.Models.Account_DTO
+@model cloud_Api_MCR.Models.Account_DTO.ViewAccountReportModel
+
+@{
+    ViewBag.Title = "BalanceSheet";
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedCompanyCode = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+}
+
+
+<link href="~/Content/bootstrap-Datepicker/datepicker.css" rel="stylesheet" />
+<link href="~/Content/bootstrap-Datepicker/datepicker3.css" rel="stylesheet" />
+<script src="~/Content/bootstrap-Datepicker/bootstrap-datepicker.js"></script>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    
+    <div id="contentHeaderBox">
+        <h1 style="padding-left:16px">Balance Sheet</h1>
+    </div>
+    <br />
+    <div class="col-md-12">
+        <div class="form-group">
+            <div class="row">
+                <div class="col-md-1">@Html.Label("name", "As On:", htmlAttributes: new { @class = "control-label" })</div>
+                <div class="col-md-3">
+                    @if (TempData["BalanceSheet_Date"] != null)
+                    {
+                        @Html.TextBoxFor(model => model.FromDate, new { @class = "form-control input-sm", id = "idFromdate", @Value = TempData["BalanceSheet_Date"] })
+                    }
+                    else
+                    {
+                        @Html.TextBoxFor(model => model.FromDate, new { @class = "form-control input-sm", id = "idFromdate", @Value = currentDateTime.ToString("dd-MMM-yyyy") })
+                    }
+                </div>
+                <div class="col-md-1">
+                    <input id="SubmitId" type="submit" class="btn btn-info" value="Show" name="command" />
+                </div>
+                <div class="col-md-1">
+                    <input id="SubmitId" type="submit" class="btn btn-info" value="Print" name="command" formtarget="_blank" />
+                </div>
+                <div class="col-md-2"></div>
+            </div>
+        </div>
+    @{
+
+        decimal sumdebit = 0, sumcredit = 0, result = 0, totalAsset = 0, totalLiability = 0;
+        int q = 1;
+
+        
+        ViewAccountReportModel passModel = (ViewAccountReportModel)TempData["ViewAccountReportModel"];
+        if (passModel != null)
+        {
+            DateTime date = Convert.ToDateTime(passModel.FromDate);
+            string d2 = Convert.ToString(date);
+            DateTime fdate2 = DateTime.Parse(d2);
+            string ffdt2 = fdate2.ToString("dd-MMM-yyyy");
+                <br>
+                <div class="form-group">
+                    <div class="panel panel-primary">
+                        <div class="panel-heading">Balance Sheet (as on: @ffdt2 )</div>
+                        <div class="panel-success">
+                            <table style="width: 100%;border: 1px solid rgba(46, 78, 194, 0.32);box-shadow: 0px 3px 9px #888888;margin-bottom: 6px;" class="table table-striped">
+                                <tr>
+                                    <th style="text-align: center">Head Particulars</th>
+                                    <th style="text-align: right;padding-right: 62px;">Amount</th>
+                                </tr>
+                            </table>
+                        </div>
+                        <ol class="breadcrumb" style="margin-bottom: 0px">
+                        @{
+                            string passDate = "";
+                            if (TempData["BalanceSheet_Date"] != null)
+                            {
+                                passDate = Convert.ToString(TempData["BalanceSheet_Date"]);
+                            }
+
+                            AccountChartController accountChartController = new AccountChartController();
+                            AccountMasterController accountMasterController = new AccountMasterController();
+                            ReportAccountController reportAccountController = new ReportAccountController();
+
+                            var reportModel = new ViewAccountListModel();
+                            reportModel.LessThanEqualtoToDateWiseAccountMasterList = accountMasterController.LessThanFromDateWiseAccountMasterList(passDate);
+                            reportModel.AccountChartList = accountChartController.AccountChartList();
+                            reportModel.AccountChartMasterList = accountChartController.AccountChartMasterList();
+                            reportModel.BalanceSheetReportsList = reportAccountController.BalanceSheetReport(passDate);
+
+                            var debitcdfind = (from n in reportModel.LessThanEqualtoToDateWiseAccountMasterList select new { n.Debitcd }).Distinct().ToList();
+                            var findaccountname = (from m in reportModel.AccountChartList select new { m.Accountcd, m.Accountnm }).ToList();
+                            string status = "NO";
+
+                            var tabledata = (from a in reportModel.LessThanEqualtoToDateWiseAccountMasterList select a).ToList();
+                            var accountname = "";
+                            string subdebit = "";
+                            Int64 i = 0, j = 0;
+                            decimal subTotalAsset = 0;
+
+                            Int64 maxHeadCD_Asset = Convert.ToInt64((from m in reportModel.AccountChartMasterList where  m.Headtp == 1 select m.Headcd).Max());
+                            Int64 minHeadCD_Asset = Convert.ToInt64((from m in reportModel.AccountChartMasterList where m.Headtp == 1 select m.Headcd).Min());
+
+                            for (Int64 z = minHeadCD_Asset; z <= maxHeadCD_Asset; z++)
+                            {
+                                Int64 Current_HeadCD = z;
+                                var getList = (from m in reportModel.AccountChartList where m.Headcd == Current_HeadCD && m.Headtp == 1 select m).ToList();
+
+                                if (getList.Count != 0)
+                                {
+                                    string HeadName = "", headType = "";
+                                    var getHeadName = (from m in reportModel.AccountChartMasterList where m.Headcd == Current_HeadCD && m.Headtp == 1 select new { m.Headnm, m.Headtp }).ToList();
+                                    foreach (var getName in getHeadName)
+                                    {
+                                        HeadName = getName.Headnm;
+                                        break;
+                                    }
+
+                                    string datafind = "";
+                                    foreach (var item1 in getList)
+                                    {
+                                        var debitcdfind1 = (from n in reportModel.LessThanEqualtoToDateWiseAccountMasterList select new { n.Debitcd }).Distinct().ToList();
+                                        foreach (var item in debitcdfind1)
+                                        {
+                                            foreach (var x in findaccountname)
+                                            {
+                                                datafind = "NO";
+                                                if (x.Accountcd == item.Debitcd && x.Accountcd == item1.Accountcd)
+                                                {
+                                                    var aa1 = Convert.ToString(item.Debitcd).Substring(3, 1);
+                                                    var tt1 = Convert.ToInt64(aa1);
+                                                    if (tt1 == 1)
+                                                    {
+                                                        datafind = "YES";
+                                                    }
+                                                    break;
+                                                }
+                                            }
+                                            if (datafind == "YES")
+                                            {
+                                                break;
+                                            }
+                                        }
+                                        if (datafind == "YES")
+                                        {
+                                            subTotalAsset = 0;
+                                            break;
+                                        }
+                                    }
+
+                                    if (datafind == "YES")
+                                    {
+                                        foreach (var list in getList)
+                                        {
+                                            foreach (var item in debitcdfind)
+                                            {
+                                                subdebit = item.Debitcd.ToString().Substring(3, 1);
+                                                if (subdebit == "1")
+                                                {
+                                                    status = "NO";
+                                                    foreach (var x in findaccountname)
+                                                    {
+                                                        if (x.Accountcd == item.Debitcd && x.Accountcd == list.Accountcd)
+                                                        {
+                                                            accountname = x.Accountnm;
+                                                            status = "YES";
+                                                            break;
+                                                        }
+                                                    }
+                                                    if (status == "YES")
+                                                    {
+                                                        sumdebit = 0;
+                                                        sumcredit = 0;
+
+                                                        foreach (var x1 in tabledata)
+                                                        {
+                                                            if (x1.Debitcd == item.Debitcd)
+                                                            {
+                                                                sumdebit = Convert.ToDecimal(sumdebit + x1.Debitamt);
+                                                                sumcredit = Convert.ToDecimal(sumcredit + x1.Creditamt);
+                                                            }
+                                                        }
+                                                        result = sumdebit - sumcredit;
+                                                        decimal rr = 0;
+                                                        string resultamt = "";
+                                                        Int64 st2 = 0;
+                                                        totalAsset = Convert.ToDecimal(totalAsset + result);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            decimal amt = 0, st = 0;
+                            if (totalAsset < 0)
+                            {
+                                amt = totalAsset * (-1);
+                                st = 1;
+                            }
+                            else
+                            {
+                                amt = totalAsset;
+                                st = 0;
+                            }
+                            string convertamount = Convert.ToString(amt);
+                            string tAsset = CommainAmount.AmountwithComma(convertamount);
+                        }
+
+                            <div class="row">
+                                <div class="col-md-6" style="background-color: #F5F5F5;">
+                                    <h4 id="paneldown1"><span class="glyphicon glyphicon-chevron-down" style="padding-left: 7px"></span><span style="padding-left: 4px">ASSET</span></h4>
+                                    <h4 id="panelup1"><span class="glyphicon glyphicon-chevron-up" style="padding-left: 7px"></span><span style="padding-left: 4px">ASSET</span></h4>
+                                </div>
+                                <div class="col-md-6" style="background-color: #F5F5F5;text-align:right;padding-right: 38px;">
+                                    <h4 id="paneldown2"><span>@tAsset</span></h4>
+                                    <h4 id="panelup2"><span>@tAsset</span></h4>
+                                </div>
+                            </div>
+                            <div id="assetID_Sub" cass="col-md-12">
+                                <ul class="accordion">
+                                    @for (Int64 z = minHeadCD_Asset; z <= maxHeadCD_Asset; z++)
+                                    {
+                                        Int64 Current_HeadCD = z;
+                                        var getList = (from m in reportModel.AccountChartList where m.Headcd == Current_HeadCD && m.Headtp == 1 select m).ToList();
+
+                                        if (getList.Count != 0)
+                                        {
+                                            string HeadName = "", headType = "";
+                                            var getHeadName = (from m in reportModel.AccountChartMasterList where m.Headcd == Current_HeadCD && m.Headtp == 1 select new { m.Headnm, m.Headtp }).ToList();
+                                            foreach (var VARIABLE in getHeadName)
+                                            {
+                                                HeadName = VARIABLE.Headnm;
+                                                break;
+                                            }
+
+
+                                            string datafind = "";
+                                            foreach (var item1 in getList)
+                                            {
+                                                var debitcdfind1 = (from n in reportModel.LessThanEqualtoToDateWiseAccountMasterList select new { n.Debitcd }).Distinct().ToList();
+                                                foreach (var item in debitcdfind1)
+                                                {
+                                                    foreach (var x in findaccountname)
+                                                    {
+                                                        datafind = "NO";
+                                                        if (x.Accountcd == item.Debitcd && x.Accountcd == item1.Accountcd)
+                                                        {
+                                                            var aa1 = Convert.ToString(item.Debitcd).Substring(3, 1);
+                                                            var tt1 = Convert.ToInt64(aa1);
+                                                            if (tt1 == 1)
+                                                            {
+                                                                datafind = "YES";
+                                                            }
+                                                            break;
+                                                        }
+                                                    }
+                                                    if (datafind == "YES")
+                                                    {
+                                                        break;
+                                                    }
+                                                }
+                                                if (datafind == "YES")
+                                                {
+                                                    subTotalAsset = 0;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (datafind == "YES")
+                                            {
+                                                foreach (var list in getList)
+                                                {
+                                                    foreach (var item in debitcdfind)
+                                                    {
+                                                        subdebit = item.Debitcd.ToString().Substring(3, 1);
+                                                        if (subdebit == "1")
+                                                        {
+                                                            status = "NO";
+                                                            foreach (var x in findaccountname)
+                                                            {
+                                                                if (x.Accountcd == item.Debitcd && x.Accountcd == list.Accountcd)
+                                                                {
+                                                                    accountname = x.Accountnm;
+                                                                    status = "YES";
+                                                                    break;
+                                                                }
+                                                            }
+                                                            if (status == "YES")
+                                                            {
+                                                                sumdebit = 0;
+                                                                sumcredit = 0;
+
+                                                                foreach (var x1 in tabledata)
+                                                                {
+                                                                    if (x1.Debitcd == item.Debitcd)
+                                                                    {
+                                                                        sumdebit = Convert.ToDecimal(sumdebit + x1.Debitamt);
+                                                                        sumcredit = Convert.ToDecimal(sumcredit + x1.Creditamt);
+                                                                    }
+                                                                }
+
+                                                                result = sumdebit - sumcredit;
+                                                                decimal rr = 0;
+                                                                string resultamt = "";
+                                                                Int64 st2 = 0;
+
+                                                                subTotalAsset = Convert.ToDecimal(subTotalAsset + result);
+                                                                totalAsset = Convert.ToDecimal(totalAsset + result);
+
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                string subtotal = "";
+                                                if (subTotalAsset >= 0)
+                                                {
+                                                    string convertsubtotal = Convert.ToString(subTotalAsset);
+                                                    subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                                }
+                                                else
+                                                {
+                                                    int aa = Convert.ToString(subTotalAsset).Length;
+                                                    string convertsubtotal = Convert.ToString(subTotalAsset).Substring(1, aa - 1);
+
+                                                    subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                                    subtotal = "-" + subtotal;
+                                                }
+                                                <li class="list-group-item">
+                                                    <div class="panel-heading">
+                                                        <div class="row">
+                                                            <table style="width: 100%;margin-bottom: -16px;margin-top: -21px;" class="table table-striped">
+                                                                <tr>
+                                                                    <td style="text-align: left;background-color: white;">@HeadName</td>
+                                                                    <td style="text-align: right;background-color: white;">@subtotal</td>
+                                                                </tr>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <ul class="subMenu">
+                                                        <table style="width: 100%;border: 1px solid rgba(46, 78, 194, 0.32);box-shadow: -2px 3px 9px #888888;" class="table table-striped">
+                                                            @foreach (var list in getList)
+                                                            {
+                                                                foreach (var item in debitcdfind)
+                                                                {
+                                                                    subdebit = item.Debitcd.ToString().Substring(3, 1);
+                                                                    if (subdebit == "1")
+                                                                    {
+                                                                        status = "NO";
+                                                                        foreach (var x in findaccountname)
+                                                                        {
+                                                                            if (x.Accountcd == item.Debitcd && x.Accountcd == list.Accountcd)
+                                                                            {
+                                                                                accountname = x.Accountnm;
+                                                                                status = "YES";
+                                                                                break;
+                                                                            }
+                                                                        }
+                                                                        if (status == "YES")
+                                                                        {
+
+                                                                            <tr>
+                                                                                <td style="text-align: left">@accountname</td>
+                                                                                @{
+                                                                                    sumdebit = 0;
+                                                                                    sumcredit = 0;
+                                                                                }
+                                                                                @foreach (var x1 in tabledata)
+                                                                                {
+                                                                                    if (x1.Debitcd == item.Debitcd)
+                                                                                    {
+                                                                                        sumdebit = Convert.ToDecimal(sumdebit + x1.Debitamt);
+                                                                                        sumcredit = Convert.ToDecimal(sumcredit + x1.Creditamt);
+                                                                                    }
+                                                                                }
+                                                                                @{
+                                                                                    result = sumdebit - sumcredit;
+                                                                                    decimal rr = 0;
+                                                                                    string resultamt = "";
+                                                                                    Int64 st2 = 0;
+
+                                                                                    if (result < 0)
+                                                                                    {
+                                                                                        rr = result * (-1);
+                                                                                        st2 = 1;
+                                                                                        string convertamount2 = Convert.ToString(rr);
+                                                                                        resultamt = CommainAmount.AmountwithComma(convertamount2);
+                                                                                    }
+                                                                                    else
+                                                                                    {
+                                                                                        st2 = 0;
+                                                                                        string convertamount2 = Convert.ToString(result);
+                                                                                        resultamt = CommainAmount.AmountwithComma(convertamount2);
+
+                                                                                    }
+                                                                                    subTotalAsset = Convert.ToDecimal(subTotalAsset + result);
+                                                                                    totalAsset = Convert.ToDecimal(totalAsset + result);
+                                                                                }
+                                                                                @if (st2 == 1)
+                                                                                {
+                                                                                    <td style="text-align: right">-@resultamt</td>
+                                                                                }
+                                                                                else
+                                                                                {
+                                                                                    <td style="text-align: right">@resultamt</td>
+                                                                                }
+                                                                            </tr>
+                                                                                                }
+                                                                                            }
+                                                                                        }
+                                                                                    }
+                                                        </table>
+                                                    </ul>
+                                                </li>
+
+                                                                                            }
+                                                                                        }
+                                                                                    }
+
+                                </ul>
+                            </div>
+                        </ol>
+
+
+                        @*....................................................Liability.......................................................*@
+                        <ol class="breadcrumb" style="margin-bottom: 0px">
+                            @{
+                                Int64 maxHeadCD_LIABILITY = Convert.ToInt64((from m in reportModel.AccountChartMasterList where m.Headtp == 2 select m.Headcd).Max());
+                                Int64 minHeadCD_LIABILITY = Convert.ToInt64((from m in reportModel.AccountChartMasterList where m.Headtp == 2 select m.Headcd).Min());
+                                Decimal subLiability = 0;
+
+                                for (Int64 z = minHeadCD_LIABILITY; z <= maxHeadCD_LIABILITY; z++)
+                                {
+                                    Int64 Current_HeadCD = z;
+                                    var getList2 = (from m in reportModel.AccountChartList where m.Headcd == Current_HeadCD && m.Headtp == 2 select m).ToList();
+
+                                    if (getList2.Count != 0)
+                                    {
+                                        string HeadName = "", headType = "";
+                                        var getHeadName = (from m in reportModel.AccountChartMasterList where m.Headcd == Current_HeadCD && m.Headtp == 2 select new { m.Headnm, m.Headtp }).ToList();
+                                        foreach (var VARIABLE in getHeadName)
+                                        {
+                                            HeadName = VARIABLE.Headnm;
+                                            break;
+                                        }
+
+                                        string datafind = "";
+                                        foreach (var list2 in getList2)
+                                        {
+                                            var geData = (from m in reportModel.BalanceSheetReportsList select m).ToList();
+
+                                            Int64 debitcd = 0;
+                                            Decimal Amount = 0;
+
+                                            foreach (var get in geData)
+                                            {
+                                                debitcd = Convert.ToInt64(get.Debitcd);
+                                                if (debitcd == list2.Accountcd)
+                                                {
+                                                    datafind = "YES";
+                                                    break;
+                                                }
+                                            }
+                                            if (datafind == "YES")
+                                            {
+                                                subLiability = 0;
+                                                break;
+                                            }
+                                        }
+
+                                        if (datafind == "YES")
+                                        {
+                                            foreach (var list2 in getList2)
+                                            {
+                                                var geData = (from m in reportModel.BalanceSheetReportsList select m).ToList();
+
+                                                string AccountName = "", result_amount = "";
+                                                Int64 debitcd = 0;
+                                                Decimal Amount = 0;
+
+                                                foreach (var get in geData)
+                                                {
+                                                    debitcd = Convert.ToInt64(get.Debitcd);
+                                                    AccountName = get.Accountnm;
+
+                                                    if (debitcd == list2.Accountcd)
+                                                    {
+                                                        Amount = Convert.ToDecimal(get.Amount);
+
+                                                        if (Amount >= 0)
+                                                        {
+                                                            string convertcurrentAmount = Convert.ToString(Amount);
+                                                            result_amount = CommainAmount.AmountwithComma(convertcurrentAmount);
+                                                        }
+                                                        else
+                                                        {
+                                                            int aa = Convert.ToString(Amount).Length;
+                                                            string convertcurrentAmount = Convert.ToString(Amount).Substring(1, aa - 1);
+                                                            result_amount = CommainAmount.AmountwithComma(convertcurrentAmount);
+                                                            result_amount = "-" + result_amount;
+                                                        }
+
+
+                                                        if (q == 1)
+                                                        {
+                                                            q = 0;
+                                                        }
+                                                        else
+                                                        {
+                                                            q = 1;
+                                                        }
+
+                                                        subLiability = Convert.ToDecimal(subLiability + Amount);
+                                                        totalLiability = Convert.ToDecimal(totalLiability + Amount);
+                                                    }
+                                                }
+                                            }
+
+                                            string subtotal = "";
+                                            if (subLiability >= 0)
+                                            {
+                                                string convertsubtotal = Convert.ToString(subLiability);
+                                                subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                            }
+                                            else
+                                            {
+                                                int aa = Convert.ToString(subLiability).Length;
+                                                string convertsubtotal = Convert.ToString(subLiability).Substring(1, aa - 1);
+
+                                                subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                                subtotal = "-" + subtotal;
+                                            }
+
+
+                                        }
+                                    }
+                                }
+                                decimal amt1 = 0, st4 = 0;
+                                string tLiability = "";
+                                if (totalLiability < 0)
+                                {
+                                    amt1 = totalLiability * (-1);
+                                    st4 = 1;
+                                }
+                                else
+                                {
+                                    amt1 = totalLiability;
+                                    st4 = 0;
+                                }
+                                string convertamount1 = Convert.ToString(amt1);
+                                if (convertamount1 == "0")
+                                {
+                                    tLiability = "0";
+                                }
+                                else
+                                {
+                                    tLiability = CommainAmount.AmountwithComma(convertamount1);
+                                }
+
+                            }
+                            <div class="row">
+                                <div class="col-md-6" style="background-color: #F5F5F5;">
+                                    <h4 id="paneldown_Liability1"><span class="glyphicon glyphicon-chevron-down" style="padding-left: 7px"></span><span style="padding-left: 4px">LIABILITY</span></h4>
+                                    <h4 id="panelup_Liability1"><span class="glyphicon glyphicon-chevron-up" style="padding-left: 7px"></span><span style="padding-left: 4px">LIABILITY</span></h4>
+                                </div>
+                                <div class="col-md-6" style="background-color: #F5F5F5;text-align: right;padding-right: 38px;">
+                                    <h4 id="paneldown_Liability2"><span>@tLiability</span></h4>
+                                    <h4 id="panelup_Liability2"><span>@tLiability</span></h4>
+                                </div>
+                            </div>
+
+                            <div id="Liability_Sub" cass="col-md-12">
+                                <ul class="accordion">
+                                    @for (Int64 z = minHeadCD_LIABILITY; z <= maxHeadCD_LIABILITY; z++)
+                                    {
+                                        Int64 Current_HeadCD = z;
+                                        var getList2 = (from m in reportModel.AccountChartList
+                                                        where m.Headcd == Current_HeadCD && m.Headtp == 2
+                                                        select m).ToList();
+
+                                        if (getList2.Count != 0)
+                                        {
+                                            string HeadName = "", headType = "";
+                                            var getHeadName = (from m in reportModel.AccountChartMasterList
+                                                               where m.Headcd == Current_HeadCD && m.Headtp == 2
+                                                               select new { m.Headnm, m.Headtp }).ToList();
+                                            foreach (var VARIABLE in getHeadName)
+                                            {
+                                                HeadName = VARIABLE.Headnm;
+                                                break;
+                                            }
+
+                                            string datafind = "";
+                                            foreach (var list2 in getList2)
+                                            {
+                                                var geData = (from m in reportModel.BalanceSheetReportsList select m).ToList();
+
+                                                Int64 debitcd = 0;
+                                                Decimal Amount = 0;
+
+                                                foreach (var get in geData)
+                                                {
+                                                    debitcd = Convert.ToInt64(get.Debitcd);
+                                                    if (debitcd == list2.Accountcd)
+                                                    {
+                                                        datafind = "YES";
+                                                        break;
+                                                    }
+                                                }
+                                                if (datafind == "YES")
+                                                {
+                                                    subLiability = 0;
+                                                    break;
+                                                }
+                                            }
+
+                                            if (datafind == "YES")
+                                            {
+                                                foreach (var list2 in getList2)
+                                                {
+                                                    var geData = (from m in reportModel.BalanceSheetReportsList select m).ToList();
+
+                                                    string AccountName = "", result_amount = "";
+                                                    Int64 debitcd = 0;
+                                                    Decimal Amount = 0;
+
+                                                    foreach (var get in geData)
+                                                    {
+                                                        debitcd = Convert.ToInt64(get.Debitcd);
+                                                        AccountName = get.Accountnm;
+
+                                                        if (debitcd == list2.Accountcd)
+                                                        {
+                                                            Amount = Convert.ToDecimal(get.Amount);
+
+                                                            if (Amount >= 0)
+                                                            {
+                                                                string convertcurrentAmount = Convert.ToString(Amount);
+                                                                result_amount = CommainAmount.AmountwithComma(convertcurrentAmount);
+                                                            }
+                                                            else
+                                                            {
+                                                                int aa = Convert.ToString(Amount).Length;
+                                                                string convertcurrentAmount = Convert.ToString(Amount).Substring(1, aa - 1);
+                                                                result_amount = CommainAmount.AmountwithComma(convertcurrentAmount);
+                                                                result_amount = "-" + result_amount;
+                                                            }
+                                                            if (q == 1)
+                                                            {
+                                                                q = 0;
+                                                            }
+                                                            else
+                                                            {
+                                                                q = 1;
+                                                            }
+
+                                                            subLiability = Convert.ToDecimal(subLiability + Amount);
+                                                            totalLiability = Convert.ToDecimal(totalLiability + Amount);
+                                                        }
+                                                    }
+                                                }
+                                                string subtotal = "";
+                                                if (subLiability >= 0)
+                                                {
+                                                    string convertsubtotal = Convert.ToString(subLiability);
+                                                    subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                                }
+                                                else
+                                                {
+                                                    int aa = Convert.ToString(subLiability).Length;
+                                                    string convertsubtotal = Convert.ToString(subLiability).Substring(1, aa - 1);
+
+                                                    subtotal = CommainAmount.AmountwithComma(convertsubtotal);
+                                                    subtotal = "-" + subtotal;
+                                                }
+                                                <li class="list-group-item">
+                                                    <div class="panel-heading">
+                                                        <div class="row">
+                                                            <table style="width: 100%;margin-bottom: -16px;margin-top: -21px;" class="table table-striped">
+                                                                <tr>
+                                                                    <td style="text-align: left;background-color: white;">@HeadName</td>
+                                                                    <td style="text-align: right;background-color: white;">@subtotal</td>
+                                                                </tr>
+                                                            </table>
+                                                        </div>
+                                                    </div>
+                                                    <ul class="subMenu">
+                                                        <table style="width: 100%;border: 1px solid rgba(46, 78, 194, 0.32);box-shadow: -2px 3px 9px #888888;" class="table table-striped">
+
+                                                            @foreach (var list2 in getList2)
+                                                            {
+                                                                var geData = (from m in reportModel.BalanceSheetReportsList select m).ToList();
+
+                                                                string AccountName = "", result_amount = "";
+                                                                Int64 debitcd = 0;
+                                                                Decimal Amount = 0;
+
+                                                                foreach (var get in geData)
+                                                                {
+                                                                    debitcd = Convert.ToInt64(get.Debitcd);
+                                                                    AccountName = get.Accountnm;
+
+                                                                    if (debitcd == list2.Accountcd)
+                                                                    {
+                                                                        Amount = Convert.ToDecimal(get.Amount);
+
+                                                                        if (Amount >= 0)
+                                                                        {
+                                                                            string convertcurrentAmount = Convert.ToString(Amount);
+                                                                            result_amount = CommainAmount.AmountwithComma(convertcurrentAmount);
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            int aa = Convert.ToString(Amount).Length;
+                                                                            string convertcurrentAmount = Convert.ToString(Amount).Substring(1, aa - 1);
+                                                                            result_amount = CommainAmount.AmountwithComma(convertcurrentAmount);
+                                                                            result_amount = "-" + result_amount;
+                                                                        }
+
+
+                                                                        if (q == 1)
+                                                                        {
+                                                                            <tr>
+                                                                                <td style="text-align: left">@AccountName</td>
+                                                                                <td style="text-align: right">@result_amount</td>
+                                                                            </tr>
+                                                                            q = 0;
+                                                                        }
+                                                                        else
+                                                                        {
+                                                                            <tr>
+                                                                                <td style="text-align: left">@AccountName</td>
+                                                                                <td style="text-align: right">@result_amount</td>
+                                                                            </tr>
+                                                                            q = 1;
+                                                                        }
+
+                                                                        subLiability = Convert.ToDecimal(subLiability + Amount);
+                                                                        totalLiability = Convert.ToDecimal(totalLiability + Amount);
+                                                                    }
+                                                                }
+                                                            }
+                                                        </table>
+                                                    </ul>
+                                                </li>
+
+                                            }
+                                        }
+                                    }
+
+                                </ul>
+                            </div>
+                        </ol>
+
+
+
+                    </div>
+                </div>
+                                }
+        }
+
+    </div>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            $('#idFromdate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function (e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                }
+                else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function (e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+                document.getElementById("SubmitId").focus();
+            });
+
+
+            $('#assetID_Sub > ul > li > ul.subMenu').hide(); // hide submenu initially for Asset part
+            $('#Liability_Sub > ul > li > ul.subMenu').hide(); // hide submenu initially for Liability part
+
+            $('#paneldown1').hide();
+            $('#paneldown2').hide();
+            $('#paneldown_Liability1').hide();
+            $('#paneldown_Liability2').hide();
+
+            //Asset
+            $('#paneldown1').click(function () {
+                $('#assetID_Sub').show();
+                $('#paneldown1').hide();
+                $('#panelup1').show();
+                $('#paneldown2').hide();
+                $('#panelup2').show();
+            });
+            $('#panelup1').click(function () {
+                $('#assetID_Sub').hide();
+                $('#panelup1').hide();
+                $('#paneldown1').show();
+                $('#panelup2').hide();
+                $('#paneldown2').show();
+            });
+
+            //Liability
+            $('#paneldown_Liability1').click(function () {
+                $('#Liability_Sub').show();
+                $('#paneldown_Liability1').hide();
+                $('#panelup_Liability1').show();
+                $('#paneldown_Liability2').hide();
+                $('#panelup_Liability2').show();
+            });
+            $('#panelup_Liability1').click(function () {
+                $('#Liability_Sub').hide();
+                $('#panelup_Liability1').hide();
+                $('#paneldown_Liability1').show();
+                $('#panelup_Liability2').hide();
+                $('#paneldown_Liability2').show();
+            });
+        });
+    </script>
+                                }

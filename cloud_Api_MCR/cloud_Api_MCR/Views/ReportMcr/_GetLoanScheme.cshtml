@@ -1,0 +1,174 @@
+﻿@using cloud_Api_MCR.DataAccess.OTHERS
+@using cloud_Api_MCR.Models.MCR_DTO
+@model cloud_Api_MCR.Models.MCR_DTO.ViewMcrListModel
+@{
+    ViewBag.Title = "_GetLoanScheme";
+    Layout = null;
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="~/Content/reportcss/style.css" rel="stylesheet" />
+</head>
+
+<body style="background-color:#fafafa;">
+    <div style="width: 960px; margin: 0px auto; border: 1px solid #d3d3d3; border-radius: 5px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); background: none repeat scroll 0 0 white;">
+        <table id="mainTable" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                </tr>
+                @Html.Partial("~/Views/Shared/_HeaderReportsDiv.cshtml")
+                <tr style="outline: thin solid">
+                    <th colspan="13" align="left" style="padding: 4px; font-weight: bold">Loan Scheme</th>
+                    <th align="right" colspan="7" style="padding: 8px">Print:@currentDateTime.ToString("dd-MM-yy hh:mm tt")</th>
+                </tr>
+                <tr>
+                    <td colspan="10" style="padding:4px;font-weight:bold">As AT : <span style="font-weight: bold">@ViewBag.Date</span></td>
+                    <td colspan="10" style="font-weight: bold"> Scheme Name : <span style="font-weight:bold">@ViewBag.SchemeName</span></td>
+                </tr>
+                <tr style="background-color: #eeeeee; outline: thin solid">
+                    <td colspan="5" style="color: black; padding: 4px; font-weight: bold" align="center">Member Name</td>
+                    <td colspan="2" style="color: black; padding: 4px; font-weight: bold" align="center">Internal ID</td>
+                    <td colspan="4" style="color: black; padding: 4px; font-weight: bold" align="center">Disburse Amount</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Disburse Date</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Mature Date</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Outstanding Balance</td>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    Decimal totaldisburse = 0, totalBalance = 0;
+
+                    var getData = (from m in Model.McrMasterList select new {m.Memberid, m.Internid, m.Schemeid}).Distinct().ToList();
+
+                    foreach (var getList in getData)
+                    {
+                        Decimal outStandingBalanceAmount = 0,disburseAmount = 0;
+                        String disburseDate = "", matureDate = "", outStandingBalance = "", disburse = "";
+                        var findOpeningAndMatureDate = (from m in Model.MembersLoanList
+                                                        where m.Memberid == getList.Memberid && m.Schemeid == getList.Schemeid && m.Internid == getList.Internid
+                                                        select m).Distinct().ToList();
+                        foreach (var getloanInfo in findOpeningAndMatureDate)
+                        {
+                            if (getloanInfo.Schemeefdt != null)
+                            {
+                                DateTime fdate = Convert.ToDateTime(getloanInfo.Schemeefdt);
+                                disburseDate = fdate.ToString("dd-MMM-yyyy");
+                            }
+                            if (getloanInfo.Schemeetdt != null)
+                            {
+                                DateTime tdate = Convert.ToDateTime(getloanInfo.Schemeetdt);
+                                matureDate = tdate.ToString("dd-MMM-yyyy");
+                            }
+
+                            disburseAmount = Convert.ToDecimal(getloanInfo.Disburseamt);
+                            String convertStringAmount1 = Convert.ToString(getloanInfo.Disburseamt);
+                            disburse = CommainAmount.AmountwithComma(convertStringAmount1);
+                            break;
+                        }
+
+                        String memberName = "";
+                        var findMemberName = (from m in Model.MembersList where m.Memberid == getList.Memberid select new { m.Membernm }).Distinct().ToList();
+                        foreach (var getName in findMemberName)
+                        {
+                            memberName = getName.Membernm;
+                        }
+
+                        var findOutStandingBalance = (from m in Model.McrMasterList
+                                                      where m.Memberid == getList.Memberid && m.Schemeid == getList.Schemeid && m.Internid == getList.Internid
+                                                      select m).Distinct().ToList();
+                        foreach (var getOutStandingBalance in findOutStandingBalance)
+                        {
+                            outStandingBalanceAmount += Convert.ToDecimal(getOutStandingBalance.Debitamt - getOutStandingBalance.Creditamt);
+                            String convertStringAmount2 = Convert.ToString(outStandingBalanceAmount);
+                            outStandingBalance = CommainAmount.AmountwithComma(convertStringAmount2);
+                        }
+
+
+
+                        <tr style="outline: thin solid #807575">
+                            <td align="left" colspan="5" style="padding-left: 4px">
+                                @memberName
+                            </td>
+                            <td align="center" colspan="2" style="padding-left: 4px">
+                                @getList.Internid
+                            </td>
+                            <td align="right" colspan="4" style="padding-left: 4px">
+                                @disburse
+                            </td>
+                            <td align="center" colspan="3" style="padding-left: 4px">
+                                @disburseDate
+                            </td>
+                            <td align="center" colspan="3" style="padding-left: 4px">
+                                @matureDate
+                            </td>
+                            <td align="right" colspan="3" style="padding-left: 4px">
+                                @outStandingBalance
+                            </td>
+                        </tr>
+                        totaldisburse = Convert.ToDecimal(totaldisburse + Convert.ToDecimal(disburseAmount));
+                        totalBalance = Convert.ToDecimal(totalBalance + Convert.ToDecimal(outStandingBalanceAmount));
+
+                    }
+                    String convertStringTotalDisburse = Convert.ToString(totaldisburse);
+                    String cTotalDisburse = CommainAmount.AmountwithComma(convertStringTotalDisburse);
+
+                    String convertStringTotalBalance = Convert.ToString(totalBalance);
+                    String cTotalBalance = CommainAmount.AmountwithComma(convertStringTotalBalance);
+                }
+                <tr>
+                    <td align="right" colspan="7"><strong>Total Amount:</strong></td>
+                    <td align="right" colspan="4" style="font-weight: bold">@cTotalDisburse</td>
+                    <td align="right" colspan="6"><strong>Total Amount:</strong></td>
+                    <td align="right" colspan="3" style="font-weight: bold">@cTotalBalance</td>
+                </tr>
+                <tr>
+                    <td><br /></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+

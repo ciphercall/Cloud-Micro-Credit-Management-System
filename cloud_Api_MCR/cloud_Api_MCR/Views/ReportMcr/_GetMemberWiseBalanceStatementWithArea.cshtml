@@ -1,0 +1,186 @@
+﻿@using cloud_Api_MCR.DataAccess.OTHERS
+@using cloud_Api_MCR.Models.MCR_DTO
+@model cloud_Api_MCR.Models.MCR_DTO.ViewMcrListModel
+@{
+    ViewBag.Title = "_GetMemberWiseBalanceStatementWithArea";
+    Layout = null;
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+
+
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link href="~/Content/reportcss/style.css" rel="stylesheet" />
+</head>
+
+<body style="background-color:#fafafa;">
+    <div style="width: 960px; margin: 0px auto; border: 1px solid #d3d3d3; border-radius: 5px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); background: none repeat scroll 0 0 white;">
+        <table id="mainTable" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                </tr>
+                @Html.Partial("~/Views/Shared/_HeaderReportsDiv.cshtml")
+                <tr style="outline: thin solid">
+                    <th colspan="13" align="left" style="padding: 4px; font-weight: bold">Member Wise Balance Statement-Area</th>
+                    <th align="right" colspan="7" style="padding: 8px">Print:@currentDateTime.ToString("dd-MM-yy hh:mm tt")</th>
+                </tr>
+                <tr >
+                    <td colspan="10" style="padding: 4px; font-weight: bold"> From : <span style="font-weight: bold">@ViewBag.FromDate</span></td>
+                    <td colspan="10" style="font-weight: bold"> to : <span style="font-weight: bold">@ViewBag.ToDate</span></td>
+                </tr>
+                <tr style="outline: thin solid">
+                    <td colspan="20" style="padding:4px;font-weight:bold"> Area name : <span style="font-weight: bold">@ViewBag.AreaName</span></td>
+                </tr>
+                <tr style="background-color: #eeeeee;">
+                    <td colspan="4" style="color: black; padding: 4px; font-weight: bold" align="center">Internal-ID</td>
+                    <td colspan="4" style="color: black; padding: 4px; font-weight: bold" align="center">Scheme-ID</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Opening</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Debit</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Credit</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-weight: bold" align="center">Closing</td>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    Decimal totalOpening = 0, totalDebit = 0, totalCredit = 0, totalClosing = 0;
+
+                    var masterData = (from m in Model.McrReportsList select new { m.Memberid, m.Membernm }).Distinct().ToList();
+
+                    foreach (var masterdataList in masterData)
+                    {
+                        var childData = (from m in Model.McrReportsList
+                                         where m.Memberid == masterdataList.Memberid
+                                         select m).ToList();
+
+                        if (childData.Count != 0)
+                        {
+                            <tr>
+                                <td><br /></td>
+                            </tr>
+                            <tr>
+                                <td colspan="20" align="left" style="font-weight: bold; padding-left: 4px;">
+                                    Member:  @masterdataList.Membernm
+                                </td>
+                            </tr>
+                        }
+
+                        foreach (var childDatalist in childData)
+                        {
+                            String opening = Convert.ToString(childDatalist.Opening);
+                            String openingAmount = CommainAmount.AmountwithComma(opening);
+
+                            String debit = Convert.ToString(childDatalist.Debitamt);
+                            String debitAmount = CommainAmount.AmountwithComma(debit);
+
+                            String credit = Convert.ToString(childDatalist.Creditamt);
+                            String creditAmount = CommainAmount.AmountwithComma(credit);
+
+                            String closing = Convert.ToString(childDatalist.Closing);
+                            String closingAmount = CommainAmount.AmountwithComma(closing);
+
+                            <tr style="outline: thin solid #807575">
+                                <td align="left" colspan="4" style="padding-left: 4px">
+                                    @childDatalist.Internid
+                                </td>
+                                <td align="left" colspan="4" style="padding-left: 4px">
+                                    @childDatalist.Schemeid
+                                </td>
+                                <td align="right" colspan="3" style="padding-left: 4px">
+                                    @openingAmount
+                                </td>
+                                <td align="right" colspan="3" style="padding-left: 4px">
+                                    @debitAmount
+                                </td>
+                                <td align="right" colspan="3" style="padding-left: 4px">
+                                    @creditAmount
+                                </td>
+                                <td align="right" colspan="3" style="padding-left: 4px">
+                                    @closingAmount
+                                </td>
+                            </tr>
+                            totalOpening = Convert.ToDecimal(totalOpening + Convert.ToDecimal(childDatalist.Opening));
+                            totalDebit = Convert.ToDecimal(totalDebit + Convert.ToDecimal(childDatalist.Debitamt));
+                            totalCredit = Convert.ToDecimal(totalCredit + Convert.ToDecimal(childDatalist.Creditamt));
+                            totalClosing = Convert.ToDecimal(totalClosing + Convert.ToDecimal(childDatalist.Closing));
+                        }
+                    }
+                    String convertStringTotalOpening = Convert.ToString(totalOpening);
+                    String cTotalOpening = CommainAmount.AmountwithComma(convertStringTotalOpening);
+
+                    String convertStringTotalDebit = Convert.ToString(totalDebit);
+                    String cTotalDebit = CommainAmount.AmountwithComma(convertStringTotalDebit);
+
+                    String convertStringTotalCredit = Convert.ToString(totalCredit);
+                    String cTotalCredit = CommainAmount.AmountwithComma(convertStringTotalCredit);
+
+                    String convertStringTotalClosing = Convert.ToString(totalClosing);
+                    String cTotalClosing = CommainAmount.AmountwithComma(convertStringTotalClosing);
+                }
+                <tr>
+                    <td align="right" colspan="8"><strong>Total Amount:</strong></td>
+                    <td align="right" colspan="3" style="font-weight: bold">
+                        @cTotalOpening
+                    </td>
+                    <td align="right" colspan="3" style="font-weight: bold">
+                        @cTotalDebit
+                    </td>
+                    <td align="right" colspan="3" style="font-weight: bold">
+                        @cTotalCredit
+                    </td>
+                    <td align="right" colspan="3" style="font-weight: bold">
+                        @cTotalClosing
+                    </td>
+                </tr>
+                <tr>
+                    <td><br /></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+
+
+
+

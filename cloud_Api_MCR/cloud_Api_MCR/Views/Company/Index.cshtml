@@ -1,0 +1,92 @@
+﻿@model IEnumerable<cloud_Api_MCR.Models.ASL_DTO.ViewAslCompany>
+
+@{
+    ViewBag.Title = "Index";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if (loggedUserTp == "SADMIN" && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+}
+
+
+
+<div id="contentHeaderBox">
+    <h1>Company List</h1>
+</div>
+<br />
+
+<div class="col-md-12">
+    <div class="panel panel-info">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <tr>
+                    <th>
+                        ID
+                    </th>
+                    <th>
+                        Company Name
+                    </th>
+                    <th>
+                        Address
+                    </th>
+                    <th>
+                        Contact No
+                    </th>
+                    <th>
+                        Email
+                    </th>
+                    <th></th>
+                </tr>
+
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @{
+                                string res = Convert.ToString(item.Compid);
+                                string res1 = Convert.ToString(item.Status);
+                                string final = res + "_" + res1;
+                                var ans = final;
+                            }
+                            @ans
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Compnm)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Address)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Contactno)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Emailid)
+                        </td>
+                        <td>
+                            @Html.ActionLink("Edit", "Edit", new { id = item.Compid }) |
+                            @Html.ActionLink("Details", "Details", new { id = item.Compid })
+                            @*@Html.ActionLink("Delete", "Delete", new { id = item.AslCompanyId })*@
+                        </td>
+                    </tr>
+                                }
+
+            </table>
+        </div>
+    </div>
+</div>
+
+
+
+

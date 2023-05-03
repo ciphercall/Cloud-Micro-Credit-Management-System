@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>Landing Page</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+        <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+        }
+
+        h1 {
+            font-family: Arial, sans-serif font-size: 80px;
+            color: #DDCCEE;
+        }
+
+        .lead {
+            color: #DDCCEE;
+        }
+        /* Custom container */
+
+        .container-full {
+            display: table;
+            width: 100%;
+            min-height: 100%;
+            background-color: #110022;
+            color: #eee;
+        }
+
+            .container-full a {
+                color: #efefef;
+                text-decoration: none;
+            }
+
+        .v-center {
+            margin-top: 7%;
+        }
+
+        #clock {
+            font-size: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-full">
+        <div class="row">
+            <div class="col-lg-12 text-center v-center">
+                <h1>Maintanance</h1>
+                <h1>@Html.ActionLink("Login", "Index", "Login")</h1>
+                <p class="lead">
+                    This site in under maintanance.We'll come back soon
+                    <br />Developing By: Alchemy Software
+                </p>
+                <br>
+                <br>
+                <br>
+                <div class="col-lg-12" id="clock">
+                </div>
+            </div>
+        </div>
+        <!-- /row -->
+        <div class="row">
+            <div class="col-lg-12 text-center v-center" style="font-size:39pt;">
+                <a href="#"><i class="fa fa-google-plus"></i></a>
+                <a href="#"><i class="fa fa-facebook"></i></a>
+                <a href="#"><i class="fa fa-twitter"></i></a>
+                <a href="#"><i class="fa fa-github"></i></a>
+                <a href="#"><i class="fa fa-pinterest"></i></a>
+            </div>
+        </div>
+        <br>
+        <br>
+        <br>
+    </div>
+    <!-- /container full -->
+    <!-- script references -->
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js" charset="utf-8"></script>
+    <script>
+        function updateClock() {
+            var currentTime = new Date();
+            var currentHours = currentTime.getHours();
+            var currentMinutes = currentTime.getMinutes();
+            var currentSeconds = currentTime.getSeconds();
+            // Pad the minutes and seconds with leading zeros, if required
+            currentMinutes = (currentMinutes < 10 ? "0" : "") + currentMinutes;
+            currentSeconds = (currentSeconds < 10 ? "0" : "") + currentSeconds;
+            // Choose either "AM" or "PM" as appropriate
+            var timeOfDay = (currentHours < 12) ? "AM" : "PM";
+            // Convert the hours component to 12-hour format if needed
+            currentHours = (currentHours > 12) ? currentHours - 12 : currentHours;
+            // Convert an hours component of "0" to "12"
+            currentHours = (currentHours == 0) ? 12 : currentHours;
+            // Compose the string for display
+            var currentTimeString = currentHours + ":" + currentMinutes + ":" + currentSeconds + " " + timeOfDay;
+            $("#clock").html(currentTimeString);
+
+        }
+        $(document).ready(function () {
+            setInterval('updateClock()', 1000);
+        });
+    </script>
+</body>
+</html>

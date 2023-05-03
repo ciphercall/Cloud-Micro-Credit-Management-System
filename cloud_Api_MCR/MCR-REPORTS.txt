@@ -1,0 +1,143 @@
+1. Branch-Area Information
+   	Group: Branch 
+	Grid : Area
+2. Scheme Information
+	Group: Scheme Type
+	Grid : Scheme Information
+3. Member-Nominee Information
+	Group: Member
+	Grid : Nominee
+4. Member Information
+	Member Basic  Information (Selected Member)
+	Member Scheme Information
+5. Scheme-Member Information
+	Group: Scheme (All or Selected)
+ 	Grid : Member Information
+6. Loan Information
+	Group: Date
+	Grid : Other Information
+7. Collection Invoice
+	Parameter: Specific Invoice with Date
+	Print from Collection Form, Format Given
+8. Receipts/Payments Statement - MCR_MTRANS Table
+	Parameter: Receipts(MREC)/Payments(MPAY), From, To
+	Group    : Transaction Mode
+9. Fund Transfer Statement -MCR_MTRANS table (TRANSTP = FTRF)
+	Parameter: From, To
+10.Scheme with Ledger Statement
+	Parameter: From, To
+	Group	 : Transaction For
+
+11. MEMBER WISE BALANCE STATEMENT
+        Parameter: From, To
+        Group: Member Name
+
+select A.Compid, A.Memberid,B.Membernm,B.Areaid, A.Internid,A.Schemeid,Schemetp, sUM(OP) OP, SUM(DR) DR, SUM(CR) CR, 
+(Case When Schemetp='DEPOSIT' 
+then (SUM(OP)-SUM(DR)+SUM(CR))
+else SUM(OP)+SUM(DR)-SUM(CR) end) CLAMT from
+(
+Select A.Compid, A.Memberid, A.Internid,A.Schemeid,Schemetp, OP, 0 DR, 0 CR from 
+(Select A.Compid, Memberid, Internid,A.Schemeid,Schemetp, Sum(Creditamt)- Sum(Debitamt) OP from MCR_MASTER A inner join MCR_SCHEME B 
+on A.Compid=B.Compid and A.Schemeid = B.Schemeid and A.Compid='101' and Schemetp='DEPOSIT' and Transdt<'2017-09-20 00:00:00.000'
+group by A.Compid, Memberid, Internid,A.Schemeid,Schemetp
+UNION
+Select A.Compid, Memberid, Internid,A.Schemeid,Schemetp, Sum(Creditamt)- Sum(Debitamt) OP from MCR_MASTER A inner join MCR_SCHEME B 
+on A.Compid=B.Compid and A.Schemeid = B.Schemeid and A.Compid='101' and Schemetp='LOAN' and Transdt<'2017-09-20 00:00:00.000'
+group by A.Compid, Memberid, Internid,A.Schemeid,Schemetp) A
+
+UNION
+
+Select A.Compid, Memberid, Internid, A.Schemeid, SCHEMETP, 0 OP, Sum (Debitamt) Dr, Sum (Creditamt) Cr from MCR_MASTER A inner join MCR_SCHEME B 
+on A.Compid=B.Compid and A.Schemeid = B.Schemeid  where A.Compid='101' and Transdt between '2017-09-20 00:00:00.000' and '2017-09-26 00:00:00.000'
+group by A.Compid, Memberid, Internid,A.Schemeid,Schemetp
+) A
+inner join MCR_MEMBER B on A.Compid=B.Compid and A.Memberid = B.Memberid Where B.Compid='101' --and B.Areaid=''  
+group by A.Compid,A.Memberid,B.Membernm,B.Areaid, A.Internid,A.Schemeid,Schemetp
+
+
+
+
+12. MEMBER WISE AREA STATEMENT-AREA
+        Parameter: From, To, AREA
+        Group: Member Name
+
+select A.Compid, A.Memberid,B.Membernm,B.Areaid, A.Internid,A.Schemeid,Schemetp, sUM(OP) OP, SUM(DR) DR, SUM(CR) CR, 
+(Case When Schemetp='DEPOSIT' 
+then (SUM(OP)-SUM(DR)+SUM(CR))
+else SUM(OP)+SUM(DR)-SUM(CR) end) CLAMT from
+(
+Select A.Compid, A.Memberid, A.Internid,A.Schemeid,Schemetp, OP, 0 DR, 0 CR from 
+(Select A.Compid, Memberid, Internid,A.Schemeid,Schemetp, Sum(Creditamt)- Sum(Debitamt) OP from MCR_MASTER A inner join MCR_SCHEME B 
+on A.Compid=B.Compid and A.Schemeid = B.Schemeid and A.Compid='101' and Schemetp='DEPOSIT' and Transdt<'2017-09-20 00:00:00.000'
+group by A.Compid, Memberid, Internid,A.Schemeid,Schemetp
+UNION
+Select A.Compid, Memberid, Internid,A.Schemeid,Schemetp, Sum(Creditamt)- Sum(Debitamt) OP from MCR_MASTER A inner join MCR_SCHEME B 
+on A.Compid=B.Compid and A.Schemeid = B.Schemeid and A.Compid='101' and Schemetp='LOAN' and Transdt<'2017-09-20 00:00:00.000'
+group by A.Compid, Memberid, Internid,A.Schemeid,Schemetp) A
+
+UNION
+
+Select A.Compid, Memberid, Internid, A.Schemeid, SCHEMETP, 0 OP, Sum (Debitamt) Dr, Sum (Creditamt) Cr from MCR_MASTER A inner join MCR_SCHEME B 
+on A.Compid=B.Compid and A.Schemeid = B.Schemeid  where A.Compid='101' and Transdt between '2017-09-20 00:00:00.000' and '2017-09-26 00:00:00.000'
+group by A.Compid, Memberid, Internid,A.Schemeid,Schemetp
+) A
+inner join MCR_MEMBER B on A.Compid=B.Compid and A.Memberid = B.Memberid Where B.Compid='101' and B.Areaid=''  
+group by A.Compid,A.Memberid,B.Membernm,B.Areaid, A.Internid,A.Schemeid,Schemetp
+
+
+12. MEMBER LEDGER
+
+Select A.Compid, A.Memberid, A.Internid,A.Schemeid, Schemetp, (case when schemetp = 'DEPOSIT' then Sum(Creditamt)- Sum(Debitamt) else Sum(Debitamt)- Sum(Creditamt) end) OP from MCR_MASTER A inner join MCR_MSCHEME B 
+on A.Compid=B.Compid and A.Schemeid = B.Schemeid and A.Memberid=B.Memberid and A.Internid=B.Internid 
+and A.Compid='101' and B.Schemeid = 'ASK-90278' AND B.Internid='43345' AND B.Memberid='1011030002' and Transdt<'2017-09-20 00:00:00.000'
+inner join MCR_SCHEME C ON A.Compid=c.Compid and A.SCHEMEID = C.SCHEMEID
+group by A.Compid, A.Memberid, A.Internid,A.Schemeid, Schemetp
+
+SELECT Memberid, Schemeid, Internid, (CASE WHEN TRANSTP ='MREC' THEN 'RECEIVE' WHEN TRANSTP='MPAY' THEN 'PAYMENT' WHEN TRANSTP='JOUR' THEN 'JOURNAL' ELSE TRANSTP END) TRANSTP, TRANSDT, CONVERT(NVARCHAR(20),TRANSDT,103) AS DateFormet, 
+TRANSMY, TRANSNO, TRANSSL,  DEBITAMT, CREDITAMT,  
+(CASE WHEN TABLEID ='MCR_COLLECT' THEN 
+(CASE WHEN TRANSTP='OPEN' THEN 'CLOSING BALANCE AS ON : ' 
+      WHEN TRANSTP='MREC' THEN 'COLLECTION DATE : ' 
+	  WHEN TRANSTP='JOUR' THEN 'PERIOD FROM : ' ELSE '' END) 
+	  WHEN TABLEID ='MCR_MTRANS' THEN REMARKS +  ' : ' END )+CONVERT(NVARCHAR(20),TRANSDT,103) AS PARTICULARS 
+FROM MCR_MASTER WHERE TRANSDT BETWEEN '2017-04-20 00:00:00.000' AND '2017-10-10 00:00:00.000' AND Schemeid = 'ASK-90278' AND Internid='43345' AND Memberid='1011030002'
+ ORDER BY TRANSDT, TRANSMY DESC, TRANSTP DESC, TRANSNO, TRANSSL, DEBITAMT DESC;
+--
+(if DEPOSIT then DEPOSIT-DEBIT+CREDIT
+else LOAN then LOAN + DEBIT - CREDIT)
+
+
+13. FIELD WORKER WISE DAILY COLLECTION STATEMENT
+
+
+SELECT Schemeid AS TP, Internid, Membernm, Areanm, SUM(ISNULL(OPAMT,0)) OPAMT, SUM(ISNULL(AMTCOLLECT,0)) AMTCOLLECT, SUM(ISNULL(AMTPAY,0)) AMTPAY
+            FROM(
+            SELECT Schemeid, Internid, Membernm, Areanm, SUM(ISNULL(DEBITAMT,0))-SUM(ISNULL(CREDITAMT,0)) OPAMT, 0 AMTCOLLECT, 0 AMTPAY
+            FROM   MCR_MASTER A INNER JOIN MCR_MEMBER B ON A.Memberid = B.Memberid
+            INNER JOIN MCR_AREA C ON B.AREAID = C.AREAID
+            WHERE  TRANSDT < '2017-10-19 00:00:00.000' AND C.Fwid = '1011010001' AND A.Schemeid = 'ASK-90278'
+            GROUP BY Schemeid, Internid, Membernm, Areanm			
+			UNION
+            SELECT Schemeid, Internid, Membernm, Areanm, 0 OPAMT, SUM(ISNULL(Amount,0)) AMTCOLLECT, 0 AMTPAY
+            FROM   MCR_COLLECT A INNER JOIN MCR_MEMBER B ON A.Memberid = B.Memberid  
+            INNER JOIN MCR_AREA C ON A.Fwid = C.Fwid
+            WHERE  TRANSDT = '2017-01-19 00:00:00.000'  AND C.Fwid = '1011010001' AND A.Schemeid = 'ASK-90278'
+            GROUP BY Schemeid, Internid, Membernm, Areanm
+            UNION
+            SELECT Schemeid, Internid, Membernm, Areanm,  0 OPAMT, 0 AMTCOLLECT, SUM(ISNULL(AMOUNT,0)) AMTPAY
+            FROM   MCR_MTRANS A INNER JOIN MCR_MEMBER B ON A.Memberid = B.Memberid
+            INNER JOIN MCR_AREA C ON B.Areaid = C.Areaid
+            WHERE  TRANSTP = 'MPAY' AND TRANSDT = '2017-01-19 00:00:00.000' AND Fwid = '1011010001' AND A.Schemeid = 'ASK-90278'
+            GROUP BY Schemeid, Internid, Membernm, Areanm
+            ) A GROUP BY Schemeid, Internid, Membernm, Areanm
+
+--------------------------------------------------------------
+A. Collection Statement
+	Parameter: Scheme (All or Selected), From, To
+	Group    : Scheme with Date
+B. Balance Statement-Summary
+C. Balance Statement-Details
+D. Member Ledger
+E. Collection - Field Worker
+F. Balance - Field Worker

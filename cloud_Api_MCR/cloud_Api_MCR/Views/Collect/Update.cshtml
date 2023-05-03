@@ -1,0 +1,488 @@
+﻿@using cloud_Api_MCR.Models
+@using cloud_Api_MCR.Models.Account_DTO
+@using cloud_Api_MCR.Models.ASL_DTO
+@using cloud_Api_MCR.Models.MCR_DTO
+@model cloud_Api_MCR.Models.MCR_DTO.ViewMcrCollect
+@{
+    ViewBag.Title = "Update";
+
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedToken = HttpContext.Current.Session["loggedToken"]?.ToString();
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    var loggedCompId = HttpContext.Current.Session["loggedCompID"].ToString();
+    var loggedUserId = HttpContext.Current.Session["loggedUserID"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+
+    var createStatus = "";
+    var updateStatus = "";
+    var deleteStatus = "";
+    var viewStatus = "";
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+        ViewAslRole roleInfo = new ViewAslRole();
+        roleInfo = (ViewAslRole)TempData["UserRoleInfo"];
+        if (roleInfo != null)
+        {
+            viewStatus = roleInfo.Status;
+            createStatus = roleInfo.Insertr;
+            updateStatus = roleInfo.Updater;
+            deleteStatus = roleInfo.Deleter;
+        }
+    }
+
+    if (updateStatus == "A")
+    {
+
+    }
+    else if (createStatus == "A")
+    {
+        Response.Redirect("~/Collect/Create");
+    }
+    else if (deleteStatus == "A")
+    {
+        Response.Redirect("~/Collect/Delete");
+    }
+
+    if (viewStatus == "I" || updateStatus == "I")
+    {
+        Response.Redirect("~/GraphView/Index");
+    }
+
+
+
+    // Scheme loaded in DropdownList
+    List<SelectListItem> listOfScheme = new List<SelectListItem>();
+    List<ViewMcrScheme> passData3 = (List<ViewMcrScheme>)TempData["passData_SelectSchemeList"];
+    foreach (var n in passData3)
+    {
+        listOfScheme.Add(new SelectListItem { Text = n.Schemeid, Value = n.Schemeid.ToString() });
+    }
+
+
+    // Member loaded in DropdownList
+    List<SelectListItem> listOfMember = new List<SelectListItem>();
+    List<ViewMcrMember> passData4 = (List<ViewMcrMember>)TempData["passData_SelectMemberList"];
+    foreach (var n in passData4)
+    {
+        listOfMember.Add(new SelectListItem { Text = n.Membernm, Value = n.Memberid.ToString() });
+    }
+}
+
+<link href="~/Content/bootstrap-Datepicker/datepicker.css" rel="stylesheet" />
+<link href="~/Content/bootstrap-Datepicker/datepicker3.css" rel="stylesheet" />
+<link href="~/Content/Angular-File/ng-grid.css" rel="stylesheet" />
+<link href="~/Content/select2-4.0.3/css/select2.css" rel="stylesheet" /> <!--Select2 DropDown with Box -->
+<script src="~/Content/bootstrap-Datepicker/bootstrap-datepicker.js"></script>
+
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+
+    <div id="contentHeaderBox">
+        <h1 style="padding-left:16px">Collection Form (Update)</h1>
+        <div class="btn-group pull-right" id="editOption">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" data-hover="dropdown" aria-expanded="false">
+                <i class="fa fa-cog"></i>
+            </button>
+            <ul class="dropdown-menu pull-right" style="" role="menu">
+                <li>
+                    @if (createStatus == 'A'.ToString())
+                    {
+                        <a href="@Url.Action("Create", "Collect")"><i class="fa fa-file-text"></i> Create</a>
+                    }
+                    @*@if (deleteStatus == 'A'.ToString())
+                        {
+                            <a href="@Url.Action("Delete", "Collect")"><i class="fa fa-file-text"></i> Delete</a>
+                        }*@
+                </li>
+            </ul>
+        </div>
+    </div>
+    <br />
+
+    <div class="col-md-12">
+        <div class="form-group">
+            <div ng-app="CollectApp" data-ng-controller="ApiCollectController">
+                @Html.HiddenFor(model => model.Compid, new { id = "txtCid", @Value = loggedCompId })
+                @Html.HiddenFor(model => model.Insuserid, new { id = "txtUid", @Value = loggedUserId })
+                @Html.HiddenFor(model => model.Token, new { id = "txtTid", @Value = loggedToken })
+                @Html.HiddenFor(model => model.Insert, new { id = "txt_Insertid", @Value = createStatus })
+                @Html.HiddenFor(model => model.Update, new { id = "txt_Updateid", @Value = updateStatus })
+                @Html.HiddenFor(model => model.Delete, new { id = "txt_Deleteid", @Value = deleteStatus })
+                @Html.HiddenFor(model => model.Insltude, new { id = "latlon" })
+                <input id="lat" type="hidden" />
+                <input id="lon" type="hidden" />
+
+                <div class="row">
+                    <div class="col-md-2">
+                        <span> <b>  Date</b></span>
+                        @Html.TextBoxFor(model => model.Transdt, htmlAttributes: new { id = "txtTransDate", @class = "form-control input-sm", tabindex = "1" })
+                        @Html.HiddenFor(model => model.Branchid, htmlAttributes: new { id = "txtBranchid", @class = "form-control input-sm", @readonly = "readonly", tabindex = "-1" })
+                        @Html.HiddenFor(model => model.Fwid, htmlAttributes: new { id = "txtFieldWorkers", @class = "form-control input-sm", @readonly = "readonly", tabindex = "-1" })
+                    </div>
+                    <div class="col-md-2">
+                        <span> <b>  Month</b></span>
+                        @Html.TextBoxFor(model => model.Transmy, htmlAttributes: new {id = "txtTransMonthYear", @class = "form-control input-sm", @readonly = "readonly", tabindex = "-1"})
+                    </div>
+                    <div class="col-md-2">
+                        <span> <b>  Memo No.</b></span>
+                        @Html.DropDownListFor(model => model.Transno, new SelectList(string.Empty, "Value", "Text"), "- Select -", htmlAttributes: new { id = "txtTransNo", @class = "form-control input-sm", tabindex = "2" })
+                        <input type="submit" value="Search" data-ng-click="search($event)" class="btn btn-primary" id="btnSearch" style="display: none" />
+                    </div>
+                    <div class="col-md-6">
+                        <span> <b>  Branch Name</b></span>
+                        @Html.TextBoxFor(model => model.BranchName, htmlAttributes: new { id = "txtBranchName", @class = "form-control input-sm", @readonly = "readonly", tabindex = "-1" })
+                    </div>
+                </div>
+                <br />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <span> <b>  Field Worker</b></span>
+                        @Html.TextBoxFor(model => model.FieldWorkersName, htmlAttributes: new { id = "txtFieldWorkersName", @class = "form-control input-sm", @readonly = "readonly", tabindex = "-1" })
+                    </div>
+                    <div class="col-md-2" id="CompleteButton_DivID">
+                        <span><br></span>
+                        <input id="CompleteButtonID" type="submit" value="Refresh" @*data-ng-click="refresh($event)"*@ class="btn btn-success btn-block input-sm"/>
+                    </div>
+                    <div class="col-md-2" id="PrintButton_DivID">
+                        <span><br></span>
+                        <input id="PrintButtonID" type="submit" value="Print" @*data-ng-click="refresh($event)"*@ class="btn btn-success btn-block input-sm" name="command" formtarget="_blank" />
+                    </div>
+                </div>
+                <br />
+
+                <div class="row">
+                    @*<div class="col-md-1">
+                        </div>*@
+                    <div class="col-md-12">
+                        <div class="panel panel-primary">
+                            <div class="panel-heading">Collection Particulars</div>
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <tr>
+                                        <th @*style="width: 30%"*@>Scheme</th>
+                                        <th @*style="width: 30%"*@>Internal ID </th>
+                                        <th @*style="width: 30%"*@>Member</th>
+                                        <th @*style="width: 20%"*@>Amount</th>
+                                        <th @*style="width: 10%"*@>Remarks</th>
+                                        <th @*style="width: 10%"*@></th>
+                                    </tr>
+                                    <tr id="gridInformation1">
+                                        <td>@Html.DropDownListFor(model => model.Schemeid, listOfScheme, new {id = "ddlSchemeId", @class = "form-control input-sm", tabindex = "3"})</td>
+                                        <td>@Html.DropDownListFor(model => model.Internid, new SelectList(string.Empty, "Value", "Text"), new {id = "txtInternId", @class = "form-control input-sm"})</td>
+                                        <td>
+                                            @Html.TextBoxFor(model => model.MemberName, htmlAttributes: new { id = "idMemberName", @class = "form-control input-sm", @tabindex = "-1", @readonly = "readonly" })
+                                            @Html.HiddenFor(model => model.Memberid, new { id = "txtMemberId", @class = "form-control input-sm" })
+                                        </td>
+                                        <td><input type="number" data-ng-model="newChild.Amount" class="form-control input-sm" id="txtAmount" min="0" max="99999999" placeholder="0" step="any" tabindex="6" /></td>
+                                        <td><input type="text" data-ng-model="newChild.Remarks" class="form-control input-sm" id="txtRemarksId" tabindex="7" /></td>
+                                        <td><input type="submit" value="Insert" data-ng-click="addrow($event)" class="btn btn-primary" tabindex="8" /></td>
+                                    </tr>
+
+                                    <tr data-ng-repeat="testitem in gridData">
+                                        <td hidden><strong data-ng-hide="testitem.editMode">{{testitem.Compid}}</strong></td>
+                                        <td hidden>
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Transmy }}</p></td>
+                                        <td hidden>
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Transno }}</p></td>
+                                        <td hidden>
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Transsl }}</p></td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Schemeid }}</p>
+                                            @Html.DropDownListFor(model => model.Schemeid, listOfScheme, new {id = "gridddlSchemeId", @class = "form-control input-sm grdSchemeId", data_ng_show = "testitem.editMode", data_ng_model = "testitem.Schemeid"})
+                                        </td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Internid }}</p>
+                                            @Html.DropDownListFor(model => model.Internid, new SelectList(string.Empty, "Value", "Text"), new { id = "gridInternId", @class = "form-control input-sm grdInternId", data_ng_show = "testitem.editMode", data_ng_model = "testitem.Internid", ng_change = "getMemberName(testitem.Internid)" })
+                                        </td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.MemberName }}</p>
+                                            @Html.TextBoxFor(model => model.MemberName, new { id = "gridddlMemberName", @class = "form-control input-sm grdMemberName", data_ng_show = "testitem.editMode", data_ng_model = "testitem.MemberName", @readonly = "readonly" })
+                                            @Html.HiddenFor(model => model.Memberid, new { id = "gridddlMemberId", @class = "form-control input-sm grdMemberId", data_ng_show = "testitem.editMode", data_ng_model = "testitem.Memberid" })
+                                        </td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode" Style="text-align: right;">{{ testitem.Amount }}</p>
+                                            <input class="form-control input-sm" data-ng-show="testitem.editMode" type="number" data-ng-model="testitem.Amount" id="gridAmount" min="0" max="99999999" placeholder="0" step="any" Style="text-align: right;"/>
+                                        </td>
+                                        <td style="text-align: left;">
+                                            <p data-ng-hide="testitem.editMode">{{ testitem.Remarks }}</p>
+                                            <input class="form-control input-sm" data-ng-show="testitem.editMode" type="text" data-ng-model="testitem.Remarks" id="gridRemarksId"/>
+                                        </td>
+                                        <td>
+                                            <p data-ng-hide="testitem.editMode"><a data-ng-click="toggleEdit(testitem)" href="javascript:;">Edit</a> | <a data-ng-click="deleteItem(testitem)" href="javascript:;">Delete</a>
+                                            </p>
+                                            <p data-ng-show="testitem.editMode"><a data-ng-click="update(testitem)" href="javascript:;">Save</a> | <a data-ng-click="toggleEdit_Cancel(testitem)" href="javascript:;">Cancel</a>
+                                            </p>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style="text-align: right;"></td>
+                                        <td style="text-align: right;"></td>
+                                        <td style="text-align: right;"><b>Total :</b></td>
+                                        <td style="text-align: right;"><p id="gridTotalAmount">{{ GetSummOfAmount(gridData) }}</p></td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    @*<div class="col-md-1">
+                        </div>*@
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    //Latitute & longitude
+    <script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+
+    <script language="javascript" type="text/javascript">
+        $(function () {
+            navigator.geolocation.getCurrentPosition(showPosition);
+            //navigator.geolocation.getCurrentPosition(showPosition, positionError);
+
+            function showPosition(position) {
+                var coordinates = position.coords;
+                $("#lat").val(coordinates.latitude);
+                $("#lon").val(coordinates.longitude);
+
+                $("#latlon").val(
+                    $("#lat").val() + "," + $("#lon").val()
+                );
+            }
+        });
+    </script>
+
+
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+
+            $('#txtTransDate').datepicker({
+                format: "dd-M-yyyy",
+                autoclose: true,
+                todayHighlight: true,
+                showOnFocus: true,
+            }).on('show', function (e) {
+                if (e.date) {
+                    $(this).data('stickyDate', e.date);
+                } else {
+                    $(this).data('stickyDate', null);
+                }
+            }).on('hide', function (e) {
+                var stickyDate = $(this).data('stickyDate');
+
+                if (!e.date && stickyDate) {
+                    $(this).datepicker('setDate', stickyDate);
+                    $(this).data('stickyDate', null);
+                }
+                document.getElementById("txtBranchid").focus();
+            }).on('changeDate', dateChanged);
+
+
+            function dateChanged() {
+                var txtTransDate = $('#txtTransDate').val();
+                var txttransMonthYear = document.getElementById('txtTransMonthYear');
+                $("#idTransMonth").val(" ");
+                $.getJSON(
+                    "/Collect/DateChanged_getMonth", { "TxtTransDate": txtTransDate },
+                    function (myData) {
+                        txttransMonthYear.value = myData.month;
+                    });
+
+
+                $("#txtTransNo").val(" ");
+                $.ajax
+                ({
+                    url: '@Url.Action("Invoiceload", "Collect")',
+                    type: 'post',
+                    dataType: "json",
+                    data: { theDate: txtTransDate },
+                    success: function (data) {
+                        $("#txtTransNo").empty();
+                        $("#txtTransNo").append('<option value="'
+                            + "-Select-" + '">'
+                            + "-Select-" + '</option>');
+
+                        $.each(data, function (i, memo) {
+                            $("#txtTransNo").append('<option value="'
+                                + memo.Value + '">'
+                                + memo.Text + '</option>');
+
+                        });
+                    }
+                });
+            };
+
+
+
+            $('#ddlSchemeId').select2({
+                placeholder: 'Select an option'
+            });
+
+            $('#txtInternId').select2({
+                placeholder: 'Select an option'
+            });
+
+
+           
+
+            //$("#txtInternId").keyup(function () {
+            //    $("#txtInternId").val(this.value.match(/[0-9]*/));
+            //});
+
+            //$(document).on("keyup", "input.txtIntern", function (e) {
+            //    $(this).val(this.value.match(/[0-9]*/));
+            //});
+
+
+            $('#gridInformation1').hide();
+            $('#CompleteButtonID').hide();
+            $('#PrintButtonID').hide();
+
+            $('#txtTransNo').change(function () {
+                var transDate = $('#txtTransDate').val();
+                var transNo = $('#txtTransNo').val();
+
+                var txtBranchid = document.getElementById('txtBranchid');
+                var txtFieldWorkers = document.getElementById('txtFieldWorkers');
+                var txtBranchName = document.getElementById('txtBranchName');
+                var txtFieldWorkersName = document.getElementById('txtFieldWorkersName');
+                $.getJSON(
+                   "/Collect/GetCollectInformation", { "TransDate": transDate, "TransNo": transNo },
+                   function (myData) {
+                       txtBranchid.value = myData.branchid;
+                       txtFieldWorkers.value = myData.fwid;
+                       txtBranchName.value = myData.branchName;
+                       txtFieldWorkersName.value = myData.fieldWorkersName;
+
+                       $('#gridInformation1').show();
+                       $('#CompleteButtonID').show();
+                       $('#PrintButtonID').show();
+                       $("#txtTransDate").prop("disabled", true);
+                       $("#txtTransNo").prop("disabled", true);
+                       $('#btnSearch').click();
+                   });
+
+                $("#txtBranchid").val("");
+                $("#txtFieldWorkers").val("");
+                $("#txtBranchName").val("");
+                $("#txtFieldWorkersName").val("");
+            });
+
+
+
+            $('#CompleteButtonID').click(function () {
+                alert("Reload........");
+                window.location.reload(true);
+            });
+
+            $('#PrintButtonID').click(function () {
+                $("#txtTransNo").prop("disabled", false);
+                window.location.reload(true);
+            });
+
+
+
+            $('#ddlSchemeId').change(function () {
+                $("#idMemberName").val(" ");
+                var schemeid = $('#ddlSchemeId').val();
+                $.ajax
+                ({
+                    url: '@Url.Action("InternalIdLoadAfterSchemeSelect", "Collect")',
+                    type: 'post',
+                    dataType: "json",
+                    data: { schemeId: schemeid },
+                    success: function (data) {
+                        $("#txtInternId").empty();
+                        $("#txtInternId").append('<option value="'
+                            + '">'
+                            + "--Select--" + '</option>');
+                        $.each(data, function (i, memo) {
+
+                            $("#txtInternId").append('<option value="'
+                                + memo.Value + '">'
+                                + memo.Text + '</option>');
+                        });
+                    }
+                });
+                document.getElementById("txtInternId").focus();
+            });
+
+
+
+            $('#txtInternId').change(function () {
+                var txtInternId = $('#txtInternId').val();
+                var txtSchemeId = $('#ddlSchemeId').val();
+
+                var txtMemberName = document.getElementById('idMemberName');
+                var txtMember = document.getElementById('txtMemberId');
+                $("#idMemberName").val(" ");
+                $("#txtMemberId").val(" ");
+                $.getJSON(
+                    "/Collect/GetMemberName", { "TxtInternId": txtInternId, "TxtSchemeId": txtSchemeId },
+                    function (myData) {
+                        txtMemberName.value = myData.MemberName;
+                        txtMember.value = myData.MemberId;
+                        document.getElementById("txtAmount").focus();
+                    });
+            });
+
+
+
+
+            $(document).on("change", "select.grdSchemeId", function (e, select) {
+                $("input.grdMemberName").val(" ");
+                var schemeid = $(this).val();
+                $.ajax
+                ({
+                    url: '@Url.Action("InternalIdLoadAfterSchemeSelect", "Collect")',
+                    type: 'post',
+                    dataType: "json",
+                    data: { schemeId: schemeid },
+                    success: function (data) {
+                        $("select.grdInternId").empty();
+                        $("select.grdInternId").append('<option value="'
+                            + '">'
+                            + "--Select--" + '</option>');
+                        $.each(data, function (i, memo) {
+
+                            $("select.grdInternId").append('<option value="'
+                                + memo.Value + '">'
+                                + memo.Text + '</option>');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}
+
+<script src="~/Scripts/angularjs/1.0.5/angular.js"></script>
+<script src="~/Content/select2-4.0.3/js/select2.full.min.js"></script> <!--Select2 DropDown with Box -->
+<script src="~/Scripts/ViewScripts/Collect/_Update.js"></script>
+<script src="~/Scripts/angularjs/ui-bootstrap-tpls-0.4.0.js"></script>
+
+

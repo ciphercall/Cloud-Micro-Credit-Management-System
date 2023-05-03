@@ -1,0 +1,1208 @@
+﻿@using cloud_Api_MCR.DataAccess.OTHERS
+@model cloud_Api_MCR.Models.Account_DTO.ViewAccountListModel
+
+@{
+    ViewBag.Title = "_GetCostPoolTranDetails";
+    Layout = null;
+    if (HttpContext.Current.Session["loggedToken"] == null)
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    var loggedUserTp = HttpContext.Current.Session["loggedUserType"].ToString();
+    var loggedUserStatus = HttpContext.Current.Session["loggedUserStatus"].ToString();
+    if ((loggedUserTp == "CADMIN" || loggedUserTp == "UADMIN" || loggedUserTp == "USER") && loggedUserStatus == "A")
+    {
+    }
+    else
+    {
+        Response.Redirect(Url.Action("Index", "Logout"));
+    }
+
+    TimeZoneInfo timeZoneInfo;
+    timeZoneInfo = TimeZoneInfo.FindSystemTimeZoneById("Central Asia Standard Time");
+    DateTime currentDateTime = TimeZoneInfo.ConvertTime(DateTime.Now, timeZoneInfo);
+
+
+    String costPname = "";
+    Int64 costpid = Convert.ToInt64(ViewBag.Costpid);
+    var findCostpName = (from m in Model.AccountCostPoolList where m.Costpid == costpid select new { m.Costpnm }).ToList();
+    foreach (var getName in findCostpName)
+    {
+        costPname = getName.Costpnm;
+    }
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="~/Content/reportcss/style.css" rel="stylesheet" />
+</head>
+
+<body style=" background-color:#fafafa;">
+    <div style="width: 960px; margin: 0px auto; border: 1px solid #d3d3d3; border-radius: 5px; box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); background: none repeat scroll 0 0 white;">
+        <table id="mainTable" border="0" width="100%">
+            <thead>
+                <tr>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                    <th width="5%"></th>
+                </tr>
+                @Html.Partial("~/Views/Shared/_HeaderReportsDiv.cshtml")
+                <tr>
+                    <th colspan="13" align="left" style="padding: 4px; font-weight: bold">Cost Pool Transaction Details</th>
+                    <th align="right" colspan="7" style="padding: 8px">Print:@currentDateTime.ToString("dd-MM-yy hh:mm tt")</th>
+                </tr>
+                <tr>
+                    <td colspan="20" style="padding:4px;font-weight:bold">Cost Pool : <span style="font-weight: bold">@costPname</span></td>
+                </tr>
+                <tr>
+                    <td colspan="10" style="padding:4px;font-weight:bold">From Date : <span style="font-weight: bold">@ViewBag.FromDate</span></td>
+                    <td colspan="10" style="font-weight: bold"> To Date : <span style="font-weight:bold">@ViewBag.ToDate</span></td>
+                </tr>
+                <tr style="background-color: #eeeeee; outline: thin solid">
+                    <td colspan="3" style="color: black; padding: 4px; font-size: small" align="center">Date</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-size: small" align="center">Voucher No</td>
+                    <td colspan="4" style="color: black; padding: 4px; font-size: small" align="center">Debit Head</td>
+                    <td colspan="4" style="color: black; padding: 4px; font-size: small" align="center">Credit Head</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-size: small" align="center">Remarks</td>
+                    <td colspan="3" style="color: black; padding: 4px; font-size: small" align="center">Amount</td>
+
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    var transType = ViewBag.Type;
+                    decimal totalAsset = 0, totalexpense = 0, sumliability = 0, sumasset = 0, sumincome = 0, sumexpense = 0, totalLiability = 0, totalIncome = 0, totalExpense = 0;
+
+                    var getGlmasterlist = (from n in Model.DateWiseAccountMasterList where n.Costpid == costpid && n.Transtp == transType select new { n.Costpid, n.Debitcd }).Distinct().ToList();
+                    var getAllGlmasterlist = (from n in Model.DateWiseAccountMasterList where n.Costpid == costpid && n.Transtp == transType select n).ToList();
+                    var getaccountname = (from a in Model.AccountChartList select a).ToList();
+                    string typeSearch = "", debitAsset = "", creditAsset = "", AStatus = "", LStatus = "", IStatus = "", EStatus = "",
+                        debitliability = "", creditliability = "", debitIncome = "", creditIncome = "", debitExpense = "", creditExpense = "";
+                    Int64 transNoA = 0, transNoL = 0, transNoI = 0, transNoE = 0;
+                    string remarksAsset = "", remarksLiability = "", remarksIncome = "", remarksExpense = "", ffdtA = "", ffdtL = "", ffdtI = "", ffdtE = "";
+
+                }
+                @*<tr><td>Asset</td></tr>*@
+                @if (transType == "MREC")
+                {
+                    foreach (var item in getGlmasterlist)
+                    {
+                        foreach (var m in getAllGlmasterlist)
+                        {
+                            if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                            {
+                                typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                if (typeSearch == "1")
+                                {
+                                    sumasset = Convert.ToDecimal(sumasset + m.Creditamt);
+                                }
+                            }
+                        }
+                        totalAsset = Convert.ToDecimal(totalAsset + sumasset);
+                    }
+                    if (totalAsset != 0)
+                    {
+                        <tr><td>Asset</td></tr>
+                    }
+                    sumasset = 0;
+                    totalAsset = 0;
+
+                    foreach (var item in getGlmasterlist)
+                    {
+                        foreach (var m in getAllGlmasterlist)
+                        {
+                            if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                            {
+                                typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                if (typeSearch == "1")
+                                {
+
+                                    foreach (var x in getaccountname)
+                                    {
+                                        if (x.Accountcd == m.Debitcd)
+                                        {
+                                            debitAsset = Convert.ToString(x.Accountnm);
+                                            AStatus = "yes";
+                                        }
+                                        if (x.Accountcd == m.Creditcd)
+                                        {
+                                            creditAsset = Convert.ToString(x.Accountnm);
+                                            AStatus = "yes";
+                                        }
+                                    }
+                                    if (AStatus == "yes")
+                                    {
+                                        string dA = Convert.ToString(m.Transdt);
+                                        DateTime fdateA = DateTime.Parse(dA);
+                                        ffdtA = fdateA.ToString("dd-MMM-yyyy");
+
+                                        transNoA = Convert.ToInt64(m.Transno);
+                                        remarksAsset = Convert.ToString(m.Remarks);
+                                    }
+                                    sumasset = Convert.ToDecimal(sumasset + m.Creditamt);
+                                }
+
+                            }
+                        }
+                        if (AStatus == "yes" && sumasset != 0)
+                        {
+                            <tr style="outline: thin solid">
+                                <td colspan="3" style="padding-left: 8px">@ffdtA</td>
+                                <td colspan="3" align="left">@transNoA</td>
+                                <td colspan="4" align="left">@debitAsset</td>
+                                <td colspan="4" align="left">@creditAsset</td>
+                                <td colspan="3" align="right">@remarksAsset</td>
+                                @{
+                                    string convertamount5 = Convert.ToString(sumasset);
+                                    string Sumasset = CommainAmount.AmountwithComma(convertamount5);
+                                }
+                                <td colspan="3" align="right">@Sumasset</td>
+                            </tr>
+                                        }
+                                        totalAsset = Convert.ToDecimal(totalAsset + sumasset);
+                                    }
+                                    string convertamount = Convert.ToString(totalAsset);
+                                    string tAsset = CommainAmount.AmountwithComma(convertamount);
+
+
+                                    if (totalAsset != 0)
+                                    {
+                                        <tr style="outline: thin solid">
+                                            <td colspan="17" style="font-weight: bold" align="right">Total Asset : </td>
+                                            <td colspan="3" style="font-weight: bold" align="right">@tAsset</td>
+                                        </tr>
+                                    }
+
+                                    @*<tr><td>Liabilities</td></tr>*@
+                foreach (var item in getGlmasterlist)
+                {
+                    foreach (var m in getAllGlmasterlist)
+                    {
+                        if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                        {
+                            typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                            if (typeSearch == "2")
+                            {
+                                sumliability = Convert.ToDecimal(sumliability + m.Creditamt);
+                            }
+                        }
+                    }
+                    totalLiability = Convert.ToDecimal(totalLiability + sumliability);
+                }
+                if (totalLiability != 0)
+                {
+                    <tr><td>Liabilities</td></tr>
+                                    }
+                                    sumliability = 0;
+                                    totalLiability = 0;
+
+                                    foreach (var item in getGlmasterlist)
+                                    {
+                                        foreach (var m in getAllGlmasterlist)
+                                        {
+                                            if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                            {
+                                                typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                if (typeSearch == "2")
+                                                {
+                                                    foreach (var x in getaccountname)
+                                                    {
+                                                        if (x.Accountcd == m.Debitcd)
+                                                        {
+                                                            debitliability = Convert.ToString(x.Accountnm);
+                                                            LStatus = "yes";
+                                                        }
+                                                        if (x.Accountcd == m.Creditcd)
+                                                        {
+                                                            creditliability = Convert.ToString(x.Accountnm);
+                                                            LStatus = "yes";
+                                                        }
+                                                    }
+                                                    if (LStatus == "yes")
+                                                    {
+                                                        string dL = Convert.ToString(m.Transdt);
+                                                        DateTime fdateL = DateTime.Parse(dL);
+                                                        ffdtL = fdateL.ToString("dd-MMM-yyyy");
+
+                                                        transNoL = Convert.ToInt64(m.Transno);
+                                                        remarksLiability = Convert.ToString(m.Remarks);
+                                                    }
+                                                    sumliability = Convert.ToDecimal(sumliability + m.Creditamt);
+                                                }
+                                            }
+                                        }
+                                        if (LStatus == "yes" && sumliability != 0)
+                                        {
+                                            <tr style="outline:thin solid">
+                                                <td colspan="3" style="padding-left: 8px">@ffdtL</td>
+                                                <td colspan="3" align="left">@transNoL</td>
+                                                <td colspan="4" align="left">@debitliability</td>
+                                                <td colspan="4" align="left">@creditliability</td>
+                                                <td colspan="3" align="right">@remarksLiability</td>
+                                                @{
+                                                    string convertamount6 = Convert.ToString(sumliability);
+                                                    string Sumliability = CommainAmount.AmountwithComma(convertamount6);
+                                                }
+                                                <td colspan="3" align="right">@Sumliability</td>
+                                            </tr>
+                                                        }
+                                                        totalLiability = Convert.ToDecimal(totalLiability + sumliability);
+                                                    }
+
+                                                    string convertamount1 = Convert.ToString(totalLiability);
+                                                    string tLiability = CommainAmount.AmountwithComma(convertamount1);
+
+                                                    if (totalLiability != 0)
+                                                    {
+                                                        <tr style="outline: thin solid">
+                                                            <td colspan="17" style="font-weight: bold" align="right">Total Liability : </td>
+                                                            <td colspan="3" style="font-weight: bold" align="right">@tLiability</td>
+                                                        </tr>
+                                                    }
+
+                                                    @*<tr><td>Income</td></tr>*@
+                foreach (var item in getGlmasterlist)
+                {
+                    foreach (var m in getAllGlmasterlist)
+                    {
+                        if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                        {
+                            typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                            if (typeSearch == "3")
+                            {
+                                sumincome = Convert.ToDecimal(sumincome + m.Creditamt);
+                            }
+                        }
+                    }
+                    totalIncome = Convert.ToDecimal(totalIncome + sumincome);
+                }
+                    if (totalIncome != 0)
+                    {
+                        <tr><td>Income</td></tr>
+                                                    }
+                                                    totalIncome = 0;
+                                                    sumincome = 0;
+
+                                                    foreach (var item in getGlmasterlist)
+                                                    {
+                                                        foreach (var m in getAllGlmasterlist)
+                                                        {
+                                                            if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                            {
+                                                                typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                if (typeSearch == "3")
+                                                                {
+
+                                                                    foreach (var x in getaccountname)
+                                                                    {
+                                                                        if (x.Accountcd == m.Debitcd)
+                                                                        {
+                                                                            debitIncome = Convert.ToString(x.Accountnm);
+                                                                            IStatus = "yes";
+                                                                        }
+                                                                        if (x.Accountcd == m.Creditcd)
+                                                                        {
+                                                                            creditIncome = Convert.ToString(x.Accountnm);
+                                                                            IStatus = "yes";
+                                                                        }
+                                                                    }
+                                                                    if (IStatus == "yes")
+                                                                    {
+                                                                        string dI = Convert.ToString(m.Transdt);
+                                                                        DateTime fdateI = DateTime.Parse(dI);
+                                                                        ffdtI = fdateI.ToString("dd-MMM-yyyy");
+
+                                                                        transNoI = Convert.ToInt64(m.Transno);
+                                                                        remarksIncome = Convert.ToString(m.Remarks);
+                                                                    }
+                                                                    sumincome = Convert.ToDecimal(sumincome + m.Creditamt);
+                                                                }
+                                                            }
+                                                        }
+                                                        if (IStatus == "yes" && sumincome != 0)
+                                                        {
+                                                            <tr style="outline:thin solid">
+                                                                <td colspan="3" style="padding-left: 8px">@ffdtI</td>
+                                                                <td colspan="3" align="left">@transNoI</td>
+                                                                <td colspan="4" align="left">@debitIncome</td>
+                                                                <td colspan="4" align="left">@creditIncome</td>
+                                                                <td colspan="3" align="right">@remarksIncome</td>
+                                                                @{
+                                                                    string convertamount7 = Convert.ToString(sumincome);
+                                                                    string Sumincome = CommainAmount.AmountwithComma(convertamount7);
+                                                                }
+                                                                <td colspan="3" align="right">@Sumincome</td>
+                                                            </tr>
+                                                                        }
+                                                                        totalIncome = Convert.ToDecimal(totalIncome + sumincome);
+                                                                    }
+
+                                                                    string convertamount2 = Convert.ToString(totalIncome);
+                                                                    string tIncome = CommainAmount.AmountwithComma(convertamount2);
+
+                                                                    if (totalIncome != 0)
+                                                                    {
+                                                                        <tr style="outline: thin solid">
+                                                                            <td colspan="17" style="font-weight: bold" align="right">Total Income : </td>
+                                                                            <td colspan="3" style="font-weight: bold" align="right">@tIncome</td>
+                                                                        </tr>
+                                                                    }
+                                                                    @*<tr><td>Expenditure</td></tr>*@
+                foreach (var item in getGlmasterlist)
+                {
+                    foreach (var m in getAllGlmasterlist)
+                    {
+                        if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                        {
+                            typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                            if (typeSearch == "4")
+                            {
+                                sumexpense = Convert.ToDecimal(sumexpense + m.Creditamt);
+                            }
+                        }
+                    }
+                    totalExpense = Convert.ToDecimal(totalExpense + sumexpense);
+                }
+                if (totalExpense != 0)
+                {
+                    <tr><td>Expenditure</td></tr>
+                                                                    }
+                                                                    sumexpense = 0;
+                                                                    totalExpense = 0;
+
+                                                                    foreach (var item in getGlmasterlist)
+                                                                    {
+                                                                        foreach (var m in getAllGlmasterlist)
+                                                                        {
+                                                                            if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                            {
+                                                                                typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                if (typeSearch == "4")
+                                                                                {
+
+                                                                                    foreach (var x in getaccountname)
+                                                                                    {
+                                                                                        if (x.Accountcd == m.Debitcd)
+                                                                                        {
+                                                                                            debitExpense = Convert.ToString(x.Accountnm);
+                                                                                            EStatus = "yes";
+                                                                                        }
+                                                                                        if (x.Accountcd == m.Creditcd)
+                                                                                        {
+                                                                                            creditExpense = Convert.ToString(x.Accountnm);
+                                                                                            EStatus = "yes";
+                                                                                        }
+                                                                                    }
+
+                                                                                    if (EStatus == "yes")
+                                                                                    {
+                                                                                        string dE = Convert.ToString(m.Transdt);
+                                                                                        DateTime fdateE = DateTime.Parse(dE);
+                                                                                        ffdtE = fdateE.ToString("dd-MMM-yyyy");
+
+                                                                                        transNoE = Convert.ToInt64(m.Transno);
+                                                                                        remarksExpense = Convert.ToString(m.Remarks);
+                                                                                    }
+                                                                                    sumexpense = Convert.ToDecimal(sumexpense + m.Creditamt);
+                                                                                }
+                                                                            }
+                                                                        }
+                                                                        if (EStatus == "yes" && sumexpense != 0)
+                                                                        {
+                                                                            <tr style="outline:thin solid">
+                                                                                <td colspan="3" style="padding-left: 8px">@ffdtE</td>
+                                                                                <td colspan="3" align="left">@transNoE</td>
+                                                                                <td colspan="4" align="left">@debitExpense</td>
+                                                                                <td colspan="4" align="left">@creditExpense</td>
+                                                                                <td colspan="3" align="right">@remarksExpense</td>
+                                                                                @{
+                                                                                    string convertamount8 = Convert.ToString(sumexpense);
+                                                                                    string Sumexpense = CommainAmount.AmountwithComma(convertamount8);
+                                                                                }
+                                                                                <td colspan="3" align="right">@Sumexpense</td>
+                                                                            </tr>
+                                                                                        }
+                                                                                        totalExpense = Convert.ToDecimal(totalExpense + sumexpense);
+                                                                                    }
+
+                                                                                    string convertamount3 = Convert.ToString(totalExpense);
+                                                                                    string tExpense = CommainAmount.AmountwithComma(convertamount3);
+                                                                                    if (totalExpense != 0)
+                                                                                    {
+                                                                                        <tr style="outline: thin solid">
+                                                                                            <td colspan="17" style="font-weight: bold" align="right">Total Expenditure : </td>
+                                                                                            <td colspan="3" style="font-weight: bold" align="right">@tExpense</td>
+                                                                                        </tr>
+                                                                                        }
+
+                                                                                    }
+                                                                                    else if (transType == "MPAY")
+                                                                                    {
+                                                                                        @*<tr><td>Asset</td></tr>*@
+
+                foreach (var item in getGlmasterlist)
+                {
+                    foreach (var m in getAllGlmasterlist)
+                    {
+                        if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                        {
+                            typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                            if (typeSearch == "1")
+                            {
+                                sumasset = Convert.ToDecimal(sumasset + m.Debitamt);
+                            }
+                        }
+                    }
+                    totalAsset = Convert.ToDecimal(totalAsset + sumasset);
+                }
+                if (totalAsset != 0)
+                {
+                    <tr><td>Asset</td></tr>
+                                                                                        }
+                                                                                        totalAsset = 0;
+                                                                                        sumasset = 0;
+
+                                                                                        foreach (var item in getGlmasterlist)
+                                                                                        {
+                                                                                            foreach (var m in getAllGlmasterlist)
+                                                                                            {
+                                                                                                if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                {
+                                                                                                    typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                    if (typeSearch == "1")
+                                                                                                    {
+                                                                                                        foreach (var x in getaccountname)
+                                                                                                        {
+                                                                                                            if (x.Accountcd == m.Debitcd)
+                                                                                                            {
+                                                                                                                debitAsset = Convert.ToString(x.Accountnm);
+                                                                                                                AStatus = "yes";
+
+
+                                                                                                            }
+                                                                                                            if (x.Accountcd == m.Creditcd)
+                                                                                                            {
+                                                                                                                creditAsset = Convert.ToString(x.Accountnm);
+                                                                                                                AStatus = "yes";
+                                                                                                            }
+                                                                                                        }
+                                                                                                        if (AStatus == "yes")
+                                                                                                        {
+                                                                                                            string dA = Convert.ToString(m.Transdt);
+                                                                                                            DateTime fdateA = DateTime.Parse(dA);
+                                                                                                            ffdtA = fdateA.ToString("dd-MMM-yyyy");
+
+                                                                                                            transNoA = Convert.ToInt64(m.Transno);
+                                                                                                            remarksAsset = Convert.ToString(m.Remarks);
+                                                                                                        }
+                                                                                                        sumasset = Convert.ToDecimal(sumasset + m.Debitamt);
+
+                                                                                                    }
+                                                                                                }
+                                                                                            }
+                                                                                            if (AStatus == "yes" && sumasset != 0)
+                                                                                            {
+                                                                                                <tr style="outline: thin solid">
+                                                                                                    <td colspan="3" style="padding-left: 8px">@ffdtA</td>
+                                                                                                    <td colspan="3" align="left">@transNoA</td>
+                                                                                                    <td colspan="4" align="left">@debitAsset</td>
+                                                                                                    <td colspan="4" align="left">@creditAsset</td>
+                                                                                                    <td colspan="3" align="right">@remarksAsset</td>
+                                                                                                    @{
+                                                                                                        string convertamount5 = Convert.ToString(sumasset);
+                                                                                                        string Sumasset = CommainAmount.AmountwithComma(convertamount5);
+                                                                                                    }
+                                                                                                    <td colspan="3" align="right">@Sumasset</td>
+                                                                                                </tr>
+                                                                                                            }
+                                                                                                            totalAsset = Convert.ToDecimal(totalAsset + sumasset);
+                                                                                                        }
+
+                                                                                                        string convertamount1 = Convert.ToString(totalAsset);
+                                                                                                        string tAsset1 = CommainAmount.AmountwithComma(convertamount1);
+
+                                                                                                        if (totalAsset != 0)
+                                                                                                        {
+                                                                                                            <tr style="outline: thin solid">
+                                                                                                                <td colspan="17" style="font-weight: bold" align="right">Total Asset : </td>
+                                                                                                                <td colspan="3" style="font-weight: bold" align="right">@tAsset1</td>
+                                                                                                            </tr>
+                                                                                                        }
+
+                                                                                                        @*<tr><td>Liabilities</td></tr>*@
+                foreach (var item in getGlmasterlist)
+                {
+                    foreach (var m in getAllGlmasterlist)
+                    {
+                        if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                        {
+                            typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                            if (typeSearch == "2")
+                            {
+                                sumliability = Convert.ToDecimal(sumliability + m.Debitamt);
+                            }
+                        }
+                    }
+                    totalLiability = Convert.ToDecimal(totalLiability + sumliability);
+                }
+                if (totalLiability != 0)
+                {
+                    <tr><td>Liabilities</td></tr>
+                                                                                                        }
+                                                                                                        sumliability = 0;
+                                                                                                        totalLiability = 0;
+
+                                                                                                        foreach (var item in getGlmasterlist)
+                                                                                                        {
+                                                                                                            foreach (var m in getAllGlmasterlist)
+                                                                                                            {
+                                                                                                                if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                {
+                                                                                                                    typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                    if (typeSearch == "2")
+                                                                                                                    {
+
+                                                                                                                        foreach (var x in getaccountname)
+                                                                                                                        {
+                                                                                                                            if (x.Accountcd == m.Debitcd)
+                                                                                                                            {
+                                                                                                                                debitliability = Convert.ToString(x.Accountnm);
+                                                                                                                                LStatus = "yes";
+
+                                                                                                                            }
+                                                                                                                            if (x.Accountcd == m.Creditcd)
+                                                                                                                            {
+                                                                                                                                creditliability = Convert.ToString(x.Accountnm);
+                                                                                                                                LStatus = "yes";
+                                                                                                                            }
+                                                                                                                        }
+                                                                                                                        sumliability = Convert.ToDecimal(sumliability + m.Debitamt);
+                                                                                                                    }
+                                                                                                                    if (LStatus == "yes")
+                                                                                                                    {
+                                                                                                                        string dL = Convert.ToString(m.Transdt);
+                                                                                                                        DateTime fdateL = DateTime.Parse(dL);
+                                                                                                                        ffdtL = fdateL.ToString("dd-MMM-yyyy");
+
+                                                                                                                        transNoL = Convert.ToInt64(m.Transno);
+                                                                                                                        remarksLiability = Convert.ToString(m.Remarks);
+                                                                                                                    }
+                                                                                                                }
+                                                                                                            }
+                                                                                                            if (LStatus == "yes" && sumliability != 0)
+                                                                                                            {
+                                                                                                                <tr style="outline: thin solid">
+                                                                                                                    <td colspan="3" style="padding-left: 8px">@ffdtL</td>
+                                                                                                                    <td colspan="3" align="left">@transNoL</td>
+                                                                                                                    <td colspan="4" align="left">@debitliability</td>
+                                                                                                                    <td colspan="4" align="left">@creditliability</td>
+                                                                                                                    <td colspan="3" align="right">@remarksLiability</td>
+                                                                                                                    @{
+                                                                                                                        string convertamount6 = Convert.ToString(sumliability);
+                                                                                                                        string Sumliability = CommainAmount.AmountwithComma(convertamount6);
+                                                                                                                    }
+                                                                                                                    <td colspan="3" align="right">@Sumliability</td>
+                                                                                                                </tr>
+                                                                                                                            }
+                                                                                                                            totalLiability = Convert.ToDecimal(totalLiability + sumliability);
+                                                                                                                        }
+
+                                                                                                                        string convertamount2 = Convert.ToString(totalLiability);
+                                                                                                                        string tLiability2 = CommainAmount.AmountwithComma(convertamount2);
+                                                                                                                        if (totalLiability != 0)
+                                                                                                                        {
+                                                                                                                            <tr style="outline: thin solid">
+                                                                                                                                <td colspan="17" style="font-weight: bold" align="right">Total Liability : </td>
+                                                                                                                                <td colspan="3" style="font-weight: bold" align="right">@tLiability2</td>
+                                                                                                                            </tr>
+                                                                                                                        }
+
+                                                                                                                        @*<tr><td>Income</td></tr>*@
+                foreach (var item in getGlmasterlist)
+                {
+                    foreach (var m in getAllGlmasterlist)
+                    {
+                        if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                        {
+                            typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                            if (typeSearch == "3")
+                            {
+                                sumincome = Convert.ToDecimal(sumincome + m.Debitamt);
+                            }
+                        }
+                    }
+                    totalIncome = Convert.ToDecimal(totalIncome + sumincome);
+                }
+                if (totalIncome != 0)
+                {
+                    <tr><td>Income</td></tr>
+                                                                                                                        }
+                                                                                                                        totalIncome = 0;
+                                                                                                                        sumincome = 0;
+
+                                                                                                                        foreach (var item in getGlmasterlist)
+                                                                                                                        {
+                                                                                                                            foreach (var m in getAllGlmasterlist)
+                                                                                                                            {
+                                                                                                                                if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                {
+                                                                                                                                    typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                    if (typeSearch == "3")
+                                                                                                                                    {
+
+                                                                                                                                        foreach (var x in getaccountname)
+                                                                                                                                        {
+                                                                                                                                            if (x.Accountcd == m.Debitcd)
+                                                                                                                                            {
+                                                                                                                                                debitIncome = Convert.ToString(x.Accountnm);
+                                                                                                                                                IStatus = "yes";
+
+
+                                                                                                                                            }
+                                                                                                                                            if (x.Accountcd == m.Creditcd)
+                                                                                                                                            {
+                                                                                                                                                creditIncome = Convert.ToString(x.Accountnm);
+                                                                                                                                                IStatus = "yes";
+
+
+                                                                                                                                            }
+                                                                                                                                        }
+                                                                                                                                        sumincome = Convert.ToDecimal(sumincome + m.Debitamt);
+                                                                                                                                    }
+                                                                                                                                    if (IStatus == "yes")
+                                                                                                                                    {
+                                                                                                                                        string dI = Convert.ToString(m.Transdt);
+                                                                                                                                        DateTime fdateI = DateTime.Parse(dI);
+                                                                                                                                        ffdtI = fdateI.ToString("dd-MMM-yyyy");
+
+                                                                                                                                        transNoI = Convert.ToInt64(m.Transno);
+                                                                                                                                        remarksIncome = Convert.ToString(m.Remarks);
+                                                                                                                                    }
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                            if (IStatus == "yes" && sumincome != 0)
+                                                                                                                            {
+                                                                                                                                <tr style="outline: thin solid">
+                                                                                                                                    <td colspan="3" style="padding-left: 8px">@ffdtI</td>
+                                                                                                                                    <td colspan="3" align="left">@transNoI</td>
+                                                                                                                                    <td colspan="4" align="left">@debitIncome</td>
+                                                                                                                                    <td colspan="4" align="left">@creditIncome</td>
+                                                                                                                                    <td colspan="3" align="right">@remarksIncome</td>
+                                                                                                                                    @{
+                                                                                                                                        string convertamount7 = Convert.ToString(sumincome);
+                                                                                                                                        string Sumincome = CommainAmount.AmountwithComma(convertamount7);
+                                                                                                                                    }
+                                                                                                                                    <td colspan="3" align="right">@Sumincome</td>
+                                                                                                                                </tr>
+                                                                                                                                            }
+                                                                                                                                            totalIncome = Convert.ToDecimal(totalIncome + sumincome);
+                                                                                                                                        }
+
+                                                                                                                                        string convertamount3 = Convert.ToString(totalIncome);
+                                                                                                                                        string tIncome3 = CommainAmount.AmountwithComma(convertamount3);
+
+                                                                                                                                        if (totalIncome != 0)
+                                                                                                                                        {
+                                                                                                                                            <tr style="outline: thin solid">
+                                                                                                                                                <td colspan="17" style="font-weight: bold" align="right">Total Income : </td>
+                                                                                                                                                <td colspan="3" style="font-weight: bold" align="right">@tIncome3</td>
+                                                                                                                                            </tr>
+                                                                                                                                        }
+
+                                                                                                                                        @*<tr><td>Expenditure</td></tr>*@
+                foreach (var item in getGlmasterlist)
+                {
+                    foreach (var m in getAllGlmasterlist)
+                    {
+                        if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                        {
+                            typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                            if (typeSearch == "4")
+                            {
+                                sumexpense = Convert.ToDecimal(sumexpense + m.Debitamt);
+                            }
+                        }
+                    }
+                    totalExpense = Convert.ToDecimal(totalExpense + sumexpense);
+                }
+                if (totalExpense != 0)
+                {
+                    <tr><td>Expenditure</td></tr>
+                                                                                                                                            totalExpense = 0;
+                                                                                                                                            sumexpense = 0;
+
+                                                                                                                                            foreach (var item in getGlmasterlist)
+                                                                                                                                            {
+                                                                                                                                                foreach (var m in getAllGlmasterlist)
+                                                                                                                                                {
+                                                                                                                                                    if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                                    {
+                                                                                                                                                        typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                                        if (typeSearch == "4")
+                                                                                                                                                        {
+
+                                                                                                                                                            foreach (var x in getaccountname)
+                                                                                                                                                            {
+                                                                                                                                                                if (x.Accountcd == m.Debitcd)
+                                                                                                                                                                {
+                                                                                                                                                                    debitExpense = Convert.ToString(x.Accountnm);
+                                                                                                                                                                    EStatus = "yes";
+
+
+                                                                                                                                                                }
+                                                                                                                                                                if (x.Accountcd == m.Creditcd)
+                                                                                                                                                                {
+                                                                                                                                                                    creditExpense = Convert.ToString(x.Accountnm);
+                                                                                                                                                                    EStatus = "yes";
+
+
+                                                                                                                                                                }
+                                                                                                                                                            }
+                                                                                                                                                            if (EStatus == "yes")
+                                                                                                                                                            {
+                                                                                                                                                                string dE = Convert.ToString(m.Transdt);
+                                                                                                                                                                DateTime fdateE = DateTime.Parse(dE);
+                                                                                                                                                                ffdtE = fdateE.ToString("dd-MMM-yyyy");
+
+                                                                                                                                                                transNoE = Convert.ToInt64(m.Transno);
+                                                                                                                                                                remarksExpense = Convert.ToString(m.Remarks);
+                                                                                                                                                            }
+
+
+                                                                                                                                                            sumexpense = Convert.ToDecimal(sumexpense + m.Debitamt);
+                                                                                                                                                        }
+
+                                                                                                                                                    }
+                                                                                                                                                }
+                                                                                                                                                if (EStatus == "yes" && sumexpense != 0)
+                                                                                                                                                {
+                                                                                                                                                <tr style="outline:thin solid">
+                                                                                                                                                    <td colspan="3" style="padding-left: 8px">@ffdtE</td>
+                                                                                                                                                    <td colspan="3" align="left">@transNoE</td>
+                                                                                                                                                    <td colspan="4" align="left">@debitExpense</td>
+                                                                                                                                                    <td colspan="4" align="left">@creditExpense</td>
+                                                                                                                                                    <td colspan="3" align="right">@remarksExpense</td>
+                                                                                                                                                    @{
+                                                                                                                                                        string convertamount8 = Convert.ToString(sumexpense);
+                                                                                                                                                        string Sumexpense = CommainAmount.AmountwithComma(convertamount8);
+                                                                                                                                                    }
+                                                                                                                                                    <td colspan="3" align="right">@Sumexpense</td>
+                                                                                                                                                </tr>
+                                                                                                                                                            }
+                                                                                                                                                            totalExpense = Convert.ToDecimal(totalExpense + sumexpense);
+                                                                                                                                                        }
+
+                                                                                                                                                        string convertamount4 = Convert.ToString(totalExpense);
+                                                                                                                                                        string tExpense = CommainAmount.AmountwithComma(convertamount4);
+                                                                                                                                                        if (totalExpense != 0)
+                                                                                                                                                        {
+                                                                                                                                                            <tr style="outline: thin solid">
+                                                                                                                                                                <td colspan="17" style="font-weight: bold" align="right">Total Expenditure : </td>
+                                                                                                                                                                <td colspan="3" style="font-weight: bold" align="right">@tExpense</td>
+                                                                                                                                                            </tr>
+                                                                                                                                                            }
+
+                                                                                                                                                        }
+
+                                                                                                                                                        else if (transType == "JOUR")
+                                                                                                                                                        {
+                                                                                                                                                            @*<tr><td>Asset</td></tr>*@
+                                                                                                                                                            foreach (var item in getGlmasterlist)
+                                                                                                                                                            {
+                                                                                                                                                                foreach (var m in getAllGlmasterlist)
+                                                                                                                                                                {
+                                                                                                                                                                    if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                                                    {
+                                                                                                                                                                        typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                                                        if (typeSearch == "1")
+                                                                                                                                                                        {
+                                                                                                                                                                            sumasset = Convert.ToDecimal(sumasset + m.Debitamt);
+                                                                                                                                                                        }
+
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                                totalAsset = Convert.ToDecimal(totalAsset + sumasset);
+                                                                                                                                                            }
+                                                                                                                                                            if (totalAsset != 0)
+                                                                                                                                                            {
+                                                                                                                                                                <tr><td>Asset</td></tr>
+                                                                                                                                                            }
+                                                                                                                                                            totalAsset = 0;
+                                                                                                                                                            totalAsset = 0;
+
+                                                                                                                                                            foreach (var item in getGlmasterlist)
+                                                                                                                                                            {
+                                                                                                                                                                foreach (var m in getAllGlmasterlist)
+                                                                                                                                                                {
+                                                                                                                                                                    if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                                                    {
+                                                                                                                                                                        typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                                                        if (typeSearch == "1")
+                                                                                                                                                                        {
+
+                                                                                                                                                                            foreach (var x in getaccountname)
+                                                                                                                                                                            {
+                                                                                                                                                                                if (x.Accountcd == m.Debitcd)
+                                                                                                                                                                                {
+                                                                                                                                                                                    debitAsset = Convert.ToString(x.Accountnm);
+                                                                                                                                                                                    AStatus = "yes";
+
+
+                                                                                                                                                                                }
+                                                                                                                                                                                if (x.Accountcd == m.Creditcd)
+                                                                                                                                                                                {
+                                                                                                                                                                                    creditAsset = Convert.ToString(x.Accountnm);
+                                                                                                                                                                                    AStatus = "yes";
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+
+                                                                                                                                                                            if (AStatus == "yes")
+                                                                                                                                                                            {
+                                                                                                                                                                                string dA = Convert.ToString(m.Transdt);
+                                                                                                                                                                                DateTime fdateA = DateTime.Parse(dA);
+                                                                                                                                                                                ffdtA = fdateA.ToString("dd-MMM-yyyy");
+
+                                                                                                                                                                                transNoA = Convert.ToInt64(m.Transno);
+                                                                                                                                                                                remarksAsset = Convert.ToString(m.Remarks);
+                                                                                                                                                                            }
+
+
+                                                                                                                                                                            sumasset = Convert.ToDecimal(sumasset + m.Debitamt);
+                                                                                                                                                                        }
+
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                                if (AStatus == "yes" && sumasset != 0)
+                                                                                                                                                                {
+                                                                                                                                                                    <tr style="outline: thin solid">
+                                                                                                                                                                        <td colspan="3" style="padding-left: 8px">@ffdtA</td>
+                                                                                                                                                                        <td colspan="3" align="left">@transNoA</td>
+                                                                                                                                                                        <td colspan="4" align="left">@debitAsset</td>
+                                                                                                                                                                        <td colspan="4" align="left">@creditAsset</td>
+                                                                                                                                                                        <td colspan="3" align="right">@remarksAsset</td>
+                                                                                                                                                                        @{
+                                                                                                                                                                            string convertamount6 = Convert.ToString(sumasset);
+                                                                                                                                                                            string Sumasset = CommainAmount.AmountwithComma(convertamount6);
+                                                                                                                                                                        }
+                                                                                                                                                                        <td colspan="3" align="right">@Sumasset</td>
+                                                                                                                                                                    </tr>
+                                                                                                                                                                }
+                                                                                                                                                                totalAsset = Convert.ToDecimal(totalAsset + sumasset);
+                                                                                                                                                            }
+
+                                                                                                                                                            string convertamount5 = Convert.ToString(totalAsset);
+                                                                                                                                                            string tAsset5 = CommainAmount.AmountwithComma(convertamount5);
+
+                                                                                                                                                            if (totalAsset != 0)
+                                                                                                                                                            {
+                                                                                                                                                                <tr style="outline: thin solid">
+                                                                                                                                                                    <td colspan="17" style="font-weight: bold" align="right">Total Asset : </td>
+                                                                                                                                                                    <td colspan="3" style="font-weight: bold" align="right">@tAsset5</td>
+                                                                                                                                                                </tr>
+                                                                                                                                                            }
+
+                                                                                                                                                                            @*<tr><td>Liabilities</td></tr>*@
+
+                foreach (var item in getGlmasterlist)
+                {
+                    foreach (var m in getAllGlmasterlist)
+                    {
+                        if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                        {
+                            typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                            if (typeSearch == "2")
+                            {
+                                sumliability = Convert.ToDecimal(sumliability + m.Debitamt);
+                            }
+                        }
+                    }
+                    totalLiability = Convert.ToDecimal(totalLiability + sumliability);
+                }
+                if (totalLiability != 0)
+                {
+                                                                                                                                                                <tr><td>Liabilities</td></tr>
+                                                                                                                                                            }
+                                                                                                                                                            totalLiability = 0;
+                                                                                                                                                            sumliability = 0;
+
+
+                                                                                                                                                            foreach (var item in getGlmasterlist)
+                                                                                                                                                            {
+                                                                                                                                                                foreach (var m in getAllGlmasterlist)
+                                                                                                                                                                {
+                                                                                                                                                                    if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                                                    {
+                                                                                                                                                                        typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                                                        if (typeSearch == "2")
+                                                                                                                                                                        {
+
+                                                                                                                                                                            foreach (var x in getaccountname)
+                                                                                                                                                                            {
+                                                                                                                                                                                if (x.Accountcd == m.Debitcd)
+                                                                                                                                                                                {
+                                                                                                                                                                                    debitliability = Convert.ToString(x.Accountnm);
+                                                                                                                                                                                    LStatus = "yes";
+                                                                                                                                                                                }
+                                                                                                                                                                                if (x.Accountcd == m.Creditcd)
+                                                                                                                                                                                {
+                                                                                                                                                                                    creditliability = Convert.ToString(x.Accountnm);
+                                                                                                                                                                                    LStatus = "yes";
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+
+                                                                                                                                                                            sumliability = Convert.ToDecimal(sumliability + m.Debitamt);
+                                                                                                                                                                        }
+                                                                                                                                                                        if (LStatus == "yes")
+                                                                                                                                                                        {
+                                                                                                                                                                            string dL = Convert.ToString(m.Transdt);
+                                                                                                                                                                            DateTime fdateL = DateTime.Parse(dL);
+                                                                                                                                                                            ffdtL = fdateL.ToString("dd-MMM-yyyy");
+
+                                                                                                                                                                            transNoL = Convert.ToInt64(m.Transno);
+                                                                                                                                                                            remarksLiability = Convert.ToString(m.Remarks);
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                                if (LStatus == "yes" && sumliability != 0)
+                                                                                                                                                                {
+                                                                                                                                                                    <tr style="outline: thin solid">
+                                                                                                                                                                        <td colspan="3" style="padding-left: 8px">@ffdtL</td>
+                                                                                                                                                                        <td colspan="3" align="left">@transNoL</td>
+                                                                                                                                                                        <td colspan="4" align="left">@debitliability</td>
+                                                                                                                                                                        <td colspan="4" align="left">@creditliability</td>
+                                                                                                                                                                        <td colspan="3" align="right">@remarksLiability</td>
+                                                                                                                                                                        @{
+                                                                                                                                                                            string convertamount6 = Convert.ToString(sumliability);
+                                                                                                                                                                            string Sumliability = CommainAmount.AmountwithComma(convertamount6);
+                                                                                                                                                                        }
+                                                                                                                                                                        <td colspan="3" align="right">@Sumliability</td>
+                                                                                                                                                                    </tr>
+                                                                                                                                                                }
+                                                                                                                                                                totalLiability = Convert.ToDecimal(totalLiability + sumliability);
+                                                                                                                                                            }
+
+                                                                                                                                                            string convertamount7 = Convert.ToString(totalLiability);
+                                                                                                                                                            string tLiability7 = CommainAmount.AmountwithComma(convertamount7);
+                                                                                                                                                            if (totalLiability != 0)
+                                                                                                                                                            {
+                                                                                                                                                                <tr style="outline: thin solid">
+                                                                                                                                                                    <td colspan="17" style="font-weight: bold" align="right">Total Liability : </td>
+                                                                                                                                                                    <td colspan="3" style="font-weight: bold" align="right">@tLiability7</td>
+                                                                                                                                                                </tr>
+                                                                                                                                                            }
+
+                                                                                                                                                                                            @*<tr><td>Income</td></tr>*@
+                                                                                                                                                            foreach (var item in getGlmasterlist)
+                                                                                                                                                            {
+                                                                                                                                                                foreach (var m in getAllGlmasterlist)
+                                                                                                                                                                {
+                                                                                                                                                                    if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                                                    {
+                                                                                                                                                                        typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                                                        if (typeSearch == "3")
+                                                                                                                                                                        {
+                                                                                                                                                                            sumincome = Convert.ToDecimal(sumincome + m.Debitamt);
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                                totalIncome = Convert.ToDecimal(totalIncome + sumincome);
+                                                                                                                                                            }
+                                                                                                                                                            if (totalIncome != 0)
+                                                                                                                                                            {
+                                                                                                                                                                <tr><td>Income</td></tr>
+                                                                                                                                                            }
+                                                                                                                                                            sumincome = 0;
+                                                                                                                                                            totalIncome = 0;
+
+
+                                                                                                                                                            foreach (var item in getGlmasterlist)
+                                                                                                                                                            {
+                                                                                                                                                                foreach (var m in getAllGlmasterlist)
+                                                                                                                                                                {
+                                                                                                                                                                    if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                                                    {
+                                                                                                                                                                        typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                                                        if (typeSearch == "3")
+                                                                                                                                                                        {
+
+                                                                                                                                                                            foreach (var x in getaccountname)
+                                                                                                                                                                            {
+                                                                                                                                                                                if (x.Accountcd == m.Debitcd)
+                                                                                                                                                                                {
+                                                                                                                                                                                    debitIncome = Convert.ToString(x.Accountnm);
+                                                                                                                                                                                    IStatus = "yes";
+
+
+                                                                                                                                                                                }
+                                                                                                                                                                                if (x.Accountcd == m.Creditcd)
+                                                                                                                                                                                {
+                                                                                                                                                                                    creditIncome = Convert.ToString(x.Accountnm);
+                                                                                                                                                                                    IStatus = "yes";
+
+
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+
+
+
+                                                                                                                                                                            sumincome = Convert.ToDecimal(sumincome + m.Debitamt);
+                                                                                                                                                                        }
+                                                                                                                                                                        if (IStatus == "yes")
+                                                                                                                                                                        {
+                                                                                                                                                                            string dI = Convert.ToString(m.Transdt);
+                                                                                                                                                                            DateTime fdateI = DateTime.Parse(dI);
+                                                                                                                                                                            ffdtI = fdateI.ToString("dd-MMM-yyyy");
+
+                                                                                                                                                                            transNoI = Convert.ToInt64(m.Transno);
+                                                                                                                                                                            remarksIncome = Convert.ToString(m.Remarks);
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                                if (IStatus == "yes" && sumincome != 0)
+                                                                                                                                                                {
+                                                                                                                                                                    <tr style="outline: thin solid">
+                                                                                                                                                                        <td colspan="3" style="padding-left: 8px">@ffdtI</td>
+                                                                                                                                                                        <td colspan="3" align="left">@transNoI</td>
+                                                                                                                                                                        <td colspan="4" align="left">@debitIncome</td>
+                                                                                                                                                                        <td colspan="4" align="left">@creditIncome</td>
+                                                                                                                                                                        <td colspan="3" align="right">@remarksIncome</td>
+                                                                                                                                                                        @{
+                                                                                                                                                                            string convertamount8 = Convert.ToString(sumincome);
+                                                                                                                                                                            string Sumincome = CommainAmount.AmountwithComma(convertamount8);
+                                                                                                                                                                        }
+                                                                                                                                                                        <td colspan="3" align="right">@Sumincome</td>
+                                                                                                                                                                    </tr>
+                                                                                                                                                                }
+                                                                                                                                                                totalIncome = Convert.ToDecimal(totalIncome + sumincome);
+                                                                                                                                                            }
+
+                                                                                                                                                            string convertamount9 = Convert.ToString(totalIncome);
+                                                                                                                                                            string tIncome9 = CommainAmount.AmountwithComma(convertamount9);
+                                                                                                                                                            if (totalIncome != 0)
+                                                                                                                                                            {
+                                                                                                                                                                <tr style="outline: thin solid">
+                                                                                                                                                                    <td colspan="17" style="font-weight: bold" align="right">Total Income : </td>
+                                                                                                                                                                    <td colspan="3" style="font-weight: bold" align="right">@tIncome9</td>
+                                                                                                                                                                </tr>
+                                                                                                                                                            }
+
+                                                                                                                                                                                                            @*<tr><td>Expenditure</td></tr>*@
+                                                                                                                                                            foreach (var item in getGlmasterlist)
+                                                                                                                                                            {
+                                                                                                                                                                foreach (var m in getAllGlmasterlist)
+                                                                                                                                                                {
+                                                                                                                                                                    if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                                                    {
+                                                                                                                                                                        typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                                                        if (typeSearch == "4")
+                                                                                                                                                                        {
+                                                                                                                                                                            sumexpense = Convert.ToDecimal(sumexpense + m.Debitamt);
+                                                                                                                                                                        }
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                                totalExpense = Convert.ToDecimal(totalExpense + sumexpense);
+                                                                                                                                                            }
+                                                                                                                                                            if (totalExpense != 0)
+                                                                                                                                                            {
+                                                                                                                                                                <tr><td>Expenditure</td></tr>
+                                                                                                                                                            }
+                                                                                                                                                            sumexpense = 0;
+                                                                                                                                                            totalExpense = 0;
+
+                                                                                                                                                            foreach (var item in getGlmasterlist)
+                                                                                                                                                            {
+                                                                                                                                                                foreach (var m in getAllGlmasterlist)
+                                                                                                                                                                {
+                                                                                                                                                                    if (m.Costpid == item.Costpid && m.Debitcd == item.Debitcd)
+                                                                                                                                                                    {
+                                                                                                                                                                        typeSearch = Convert.ToString(m.Debitcd).Substring(3, 1);
+                                                                                                                                                                        if (typeSearch == "4")
+                                                                                                                                                                        {
+
+                                                                                                                                                                            foreach (var x in getaccountname)
+                                                                                                                                                                            {
+                                                                                                                                                                                if (x.Accountcd == m.Debitcd)
+                                                                                                                                                                                {
+                                                                                                                                                                                    debitExpense = Convert.ToString(x.Accountnm);
+                                                                                                                                                                                    EStatus = "yes";
+
+
+                                                                                                                                                                                }
+                                                                                                                                                                                if (x.Accountcd == m.Creditcd)
+                                                                                                                                                                                {
+                                                                                                                                                                                    creditExpense = Convert.ToString(x.Accountnm);
+                                                                                                                                                                                    EStatus = "yes";
+
+
+                                                                                                                                                                                }
+                                                                                                                                                                            }
+
+                                                                                                                                                                            if (EStatus == "yes")
+                                                                                                                                                                            {
+                                                                                                                                                                                string dE = Convert.ToString(m.Transdt);
+                                                                                                                                                                                DateTime fdateE = DateTime.Parse(dE);
+                                                                                                                                                                                ffdtE = fdateE.ToString("dd-MMM-yyyy");
+
+                                                                                                                                                                                transNoE = Convert.ToInt64(m.Transno);
+                                                                                                                                                                                remarksExpense = Convert.ToString(m.Remarks);
+                                                                                                                                                                            }
+
+                                                                                                                                                                            sumexpense = Convert.ToDecimal(sumexpense + m.Debitamt);
+                                                                                                                                                                        }
+
+                                                                                                                                                                    }
+                                                                                                                                                                }
+                                                                                                                                                                if (EStatus == "yes" && sumexpense != 0)
+                                                                                                                                                                {
+                                                                                                                                                                    <tr style="outline: thin solid">
+                                                                                                                                                                        <td colspan="3" style="padding-left: 8px">@ffdtE</td>
+                                                                                                                                                                        <td colspan="3" align="left">@transNoE</td>
+                                                                                                                                                                        <td colspan="4" align="left">@debitExpense</td>
+                                                                                                                                                                        <td colspan="4" align="left">@creditExpense</td>
+                                                                                                                                                                        <td colspan="3" align="right">@remarksExpense</td>
+                                                                                                                                                                        @{
+                                                                                                                                                                            string convertamount8 = Convert.ToString(sumexpense);
+                                                                                                                                                                            string Sumexpense = CommainAmount.AmountwithComma(convertamount8);
+                                                                                                                                                                        }
+                                                                                                                                                                        <td colspan="3" align="right">@Sumexpense</td>
+                                                                                                                                                                    </tr>
+                                                                                                                                                                }
+                                                                                                                                                                totalExpense = Convert.ToDecimal(totalExpense + sumexpense);
+                                                                                                                                                            }
+                                                                                                                                                            string convertamount10 = Convert.ToString(totalExpense);
+                                                                                                                                                            string tExpense = CommainAmount.AmountwithComma(convertamount10);
+
+                                                                                                                                                            if (totalExpense != 0)
+                                                                                                                                                            {
+                                                                                                                                                                <tr style="outline: thin solid">
+                                                                                                                                                                    <td colspan="17" style="font-weight: bold" align="right">Total Expenditure : </td>
+                                                                                                                                                                    <td colspan="3" style="font-weight: bold" align="right">@tExpense</td>
+                                                                                                                                                                </tr>
+                                                                                                                                                            }
+                                                                                                                                                        }
+                                                                                    }
+
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
